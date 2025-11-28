@@ -586,6 +586,29 @@
         .help-icons { display: flex; gap: 4px; align-items: center; }
         .help-row svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
         .help-row strong { font-weight: 600; }
+
+        /* Share preview overlay */
+        #shareOverlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 2200; }
+        #shareOverlay.active { display: flex; }
+        .share-modal { background: rgba(255,255,255,0.92); backdrop-filter: saturate(1.1) blur(8px); padding: 24px 26px 20px; border-radius: 18px; width: 380px; max-width: 92vw; box-shadow: 0 18px 48px rgba(0,0,0,0.25); display: flex; flex-direction: column; gap: 16px; }
+        body.dark-mode .share-modal { background: rgba(42,42,42,0.92); }
+        .share-modal h3 { font-size: 14px; font-weight: 700; letter-spacing: 0.4px; margin: 0; display: flex; align-items: center; gap: 8px; }
+        .share-modal h3 svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
+        .preview-row { display: flex; gap: 6px; justify-content: space-between; }
+        .preview-swatch { flex: 1; height: 48px; border-radius: 10px; position: relative; overflow: hidden; display: flex; align-items: flex-end; justify-content: flex-start; padding: 4px 6px; font-size: 9px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.5px; color: #000; mix-blend-mode: normal; }
+        .preview-gradient { flex: 1; height: 48px; border-radius: 10px; position: relative; }
+        .share-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .share-actions button { flex: 1; padding: 11px 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px; letter-spacing: 0.3px; background: #f5f5f7; color: #222; transition: background 0.2s, transform 0.15s; }
+        .share-actions button:hover { background: #ececee; transform: translateY(-2px); }
+        body.dark-mode .share-actions button { background: #2d2d2d; color: #eee; }
+        body.dark-mode .share-actions button:hover { background: #3a3a3a; }
+        .share-actions button.primary { background: #4100F5; color: #fff; }
+        .share-actions button.primary:hover { background: #3600c8; }
+        .share-preview-image { width: 100%; border-radius: 12px; border: 1px solid #e2e2e2; background: #fff; display: none; }
+        body.dark-mode .share-preview-image { border-color: #444; background: #1a1a1a; }
+        .share-meta { font-size: 10px; opacity: 0.7; text-align: center; }
+        .close-share { position: absolute; top: 10px; right: 12px; background: none; border: none; cursor: pointer; padding: 4px; }
+        .close-share svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; }
     </style>
 </head>
 <body>
@@ -608,7 +631,7 @@
             </div>
             <div class="menu-item-label">Import</div>
         </div>
-        <div class="menu-item share" onclick="sharePalette()">
+        <div class="menu-item share" onclick="openShareOverlay()">
             <div class="menu-item-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
             </div>
@@ -702,6 +725,29 @@
 
     <!-- Re-roll trigger -->
     <button id="rerollBtn" class="reroll-btn" onclick="rerollPalette()">Roll</button>
+
+    <!-- Share Preview Overlay -->
+    <div id="shareOverlay">
+        <div class="share-modal" id="shareModal">
+            <button class="close-share" onclick="closeShareOverlay()" aria-label="Close share preview">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h3>
+                <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Share Palette Preview
+            </h3>
+            <div class="preview-row" id="sharePreviewRow"></div>
+            <canvas id="shareCanvas" width="840" height="120" style="display:none"></canvas>
+            <img id="shareImage" class="share-preview-image" alt="Palette preview image" />
+            <div class="share-actions">
+                <button class="primary" onclick="performSystemShare()">System Share</button>
+                <button onclick="copyShareLink()">Copy Link</button>
+                <button onclick="copyImageData()">Copy Image</button>
+                <button onclick="downloadImage()">Download PNG</button>
+            </div>
+            <div class="share-meta" id="shareMeta">Preview ready</div>
+        </div>
+    </div>
 
     <script>
         let currentEditingColumn, currentColors = [], currentFont = "'Inter', sans-serif", darkModeEnabled = false;
@@ -1466,6 +1512,102 @@
                 }
             }
             toggleBurgerMenu();
+        }
+
+        // --- Share Preview Feature ---
+        let lastPreviewDataUrl = null;
+        function openShareOverlay() {
+            if (!paletteReady) return;
+            generateSharePreview();
+            document.getElementById('shareOverlay').classList.add('active');
+        }
+        function closeShareOverlay() {
+            document.getElementById('shareOverlay').classList.remove('active');
+        }
+        function generateSharePreview() {
+            const row = document.getElementById('sharePreviewRow');
+            row.innerHTML = '';
+            const colors = currentColors.slice(0,6);
+            const gradientColors = sortColorsByHue(colors);
+            colors.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'preview-swatch';
+                div.style.background = c;
+                const rgb = hexToRgb(c);
+                div.style.color = getOppositeColor(c);
+                div.textContent = c.toUpperCase();
+                row.appendChild(div);
+            });
+            const grad = document.createElement('div');
+            grad.className = 'preview-gradient';
+            grad.style.background = `linear-gradient(90deg, ${gradientColors.join(',')})`;
+            row.appendChild(grad);
+            // Canvas image export
+            const canvas = document.getElementById('shareCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            const sw = Math.floor(w / 7);
+            colors.forEach((c,i)=>{
+                ctx.fillStyle = c;
+                ctx.fillRect(i*sw,0,sw,h);
+                ctx.fillStyle = getOppositeColor(c);
+                ctx.font = '600 16px Inter, sans-serif';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(c.toUpperCase(), i*sw + 8, h/2);
+            });
+            // Gradient block
+            const gX = 6*sw;
+            const grd = ctx.createLinearGradient(gX,0,gX+sw,0);
+            gradientColors.forEach((c,i)=>{
+                grd.addColorStop(i/(gradientColors.length-1), c);
+            });
+            ctx.fillStyle = grd;
+            ctx.fillRect(gX,0,sw,h);
+            ctx.fillStyle = '#000';
+            ctx.font = '600 16px Inter, sans-serif';
+            ctx.fillText('GRADIENT', gX + 8, h/2);
+            lastPreviewDataUrl = canvas.toDataURL('image/png');
+            const img = document.getElementById('shareImage');
+            img.src = lastPreviewDataUrl;
+            img.style.display = 'block';
+            const meta = document.getElementById('shareMeta');
+            meta.textContent = 'Preview generated';
+        }
+        async function performSystemShare() {
+            const url = getCurrentPaletteLink();
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: 'My Palette', url });
+                    showToast('Shared');
+                } catch(e) { showToast('Share cancelled'); }
+            } else {
+                showToast('Native share unavailable');
+            }
+        }
+        async function copyShareLink() {
+            const url = getCurrentPaletteLink();
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(url);
+                showToast('Link copied');
+            } else {
+                window.prompt('Copy this link', url);
+            }
+        }
+        async function copyImageData() {
+            if (!lastPreviewDataUrl) return;
+            try {
+                const data = await fetch(lastPreviewDataUrl).then(r=>r.blob());
+                await navigator.clipboard.write([new ClipboardItem({ [data.type]: data })]);
+                showToast('Image copied');
+            } catch(e) { showToast('Copy failed'); }
+        }
+        function downloadImage() {
+            if (!lastPreviewDataUrl) return;
+            const a = document.createElement('a');
+            a.href = lastPreviewDataUrl;
+            a.download = 'palette-preview.png';
+            document.body.appendChild(a); a.click(); a.remove();
         }
 
         const parsePaletteFromURL = () => {
