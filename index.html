@@ -1,0 +1,1518 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Roboto+Serif:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@400;600&family=Playfair+Display:wght@700;900&family=Work+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: row-reverse;
+            background: #fff;
+            color: #000;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #fff;
+        }
+        
+        #controls { display: none; }
+        
+        /* Right-edge tab to toggle settings */
+        #menuTab {
+            position: fixed;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 120px;
+            background: white;
+            border: none;
+            border-radius: 10px 0 0 10px;
+            cursor: pointer;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.2);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* arrow fixed at left within tab */
+            padding-left: 6px;
+            transition: all 0.2s;
+        }
+        #menuTab .arrow { width: 18px; height: 18px; transition: transform 0.2s ease; }
+        #menuTab .arrow path { stroke: #333; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        #menuTab.active .arrow { transform: scaleX(-1); }
+        #menuTab:hover { background: #f5f5f5; }
+        #menuTab.active { right: calc(100vw / 8); }
+        body.dark-mode #menuTab { background: #2a2a2a; }
+        body.dark-mode #menuTab .arrow path { stroke: #fff; }
+        
+        #burgerMenu {
+            position: relative;
+            width: 0;
+            height: 100vh;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(1.2) blur(10px);
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+            transition: width 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-left: 1px solid #eaeaea;
+        }
+        
+        body.dark-mode #burgerMenu {
+            background: rgba(34,34,34,0.85);
+            backdrop-filter: saturate(1.2) blur(10px);
+            border-left-color: #3a3a3a;
+        }
+        
+        #burgerMenu.active { width: calc(100vw / 8); }
+        
+        .menu-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #efefef;
+            transition: background 0.2s ease, transform 0.1s ease;
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 12px;
+            order: 2;
+            border-radius: 8px;
+            margin: 6px 8px;
+        }
+        
+        body.dark-mode .menu-item { border-bottom-color: #3a3a3a; color: #fff; }
+        .menu-item:hover { background: #f7f7f7; }
+        body.dark-mode .menu-item:hover { background: #2f2f2f; }
+        
+        /* Keep tab labels neutral in light mode */
+        .menu-item.random, .menu-item.import, .menu-item.export, .menu-item.dark-mode-toggle { color: inherit; }
+        
+        .menu-item-icon {
+            height: 24px;
+            width: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+        }
+        .menu-item-icon svg { width: 20px; height: 20px; }
+        .menu-item-icon svg path { stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        body.dark-mode .menu-item-icon { color: #bbb; }
+        
+        .menu-item-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+        
+        .font-section {
+            padding: 16px 12px;
+            border-bottom: 1px solid #efefef;
+            order: 4;
+        }
+        
+        body.dark-mode .font-section { border-bottom-color: #444; }
+        
+        .font-section h4 {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        body.dark-mode .font-section h4 { color: #aaa; }
+        
+        .font-preview {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        
+        .font-item {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e6e6e6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+            background: white;
+            color: black;
+        }
+        
+        body.dark-mode .font-item {
+            border-color: #444;
+            background: #1a1a1a;
+            color: white;
+        }
+        
+        .font-item:hover {
+            border-color: #dcdcdc;
+            background: #f7f7f7;
+            transform: translateY(-1px);
+        }
+        
+        body.dark-mode .font-item:hover { background: #333; }
+        .font-item.active {
+            border-color: #999;
+        }
+        body.dark-mode .font-item.active { border-color: #666; }
+
+        .font-item.cooldown { opacity: 0.5; pointer-events: none; }
+
+        .font-item-title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            margin-bottom: 2px;
+        }
+        .font-item-sample {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        #fileInput { display: none; }
+        
+        #palette {
+            display: flex;
+            height: 100vh;
+            flex: 1;
+            transition: flex 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .color-column {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: filter 0.3s;
+            cursor: pointer;
+            min-width: 0;
+        }
+        
+        .color-column:hover { filter: none; }
+        .color-column:active { filter: none; }
+        body.dark-mode .color-column { filter: none; }
+        body.dark-mode .color-column:hover { filter: none; }
+
+        /* Hover-based dimming removed */
+        
+        .lock-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: none;
+        }
+        .lock-indicator svg { width: 16px; height: 16px; }
+        .lock-indicator svg path { stroke: #111; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+        body.dark-mode .lock-indicator { background: rgba(0, 0, 0, 0.9); }
+        body.dark-mode .lock-indicator svg path { stroke: #fff; }
+        
+        .lock-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 10;
+        }
+        
+        body.dark-mode .lock-btn {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        .lock-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
+        }
+        
+        body.dark-mode .lock-btn:hover {
+            background: rgba(0, 0, 0, 1);
+        }
+        
+        .color-picker-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.92);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+            z-index: 2000;
+            display: none;
+            backdrop-filter: saturate(1.1) blur(8px);
+        }
+        
+        body.dark-mode .color-picker-overlay {
+            background: #2a2a2a;
+            color: white;
+        }
+        
+        .color-picker-overlay.active {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+        .color-picker-overlay h3 {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            color: #333;
+            text-align: left;
+        }
+        .color-picker-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #666;
+        }
+        
+        .color-picker-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .color-picker-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 15px;
+            border: 3px solid #4100F5;
+            box-shadow: 0 8px 24px rgba(65, 0, 245, 0.2);
+            cursor: pointer;
+        }
+        
+        body.dark-mode .color-picker-preview { border-color: #7d5dff; }
+        
+        .color-picker-overlay input[type="color"] {
+            width: 0;
+            height: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .color-picker-overlay input[type="text"] {
+            padding: 10px 12px;
+            border: 1px solid #e6e6e6;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-align: center;
+            width: 160px;
+            transition: all 0.2s;
+        }
+        
+        body.dark-mode .color-picker-overlay input[type="text"] {
+            background: #1a1a1a;
+            border-color: #444;
+            color: white;
+        }
+        
+        .color-picker-overlay input[type="text"]:focus {
+            outline: none;
+            border-color: #d0ccff;
+            box-shadow: 0 0 0 3px rgba(65, 0, 245, 0.08);
+        }
+        
+        .color-picker-overlay .buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .color-picker-overlay button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            min-width: 120px;
+        }
+        
+        .btn-confirm {
+            background: #00D084;
+            color: white;
+        }
+        
+        .btn-confirm:hover {
+            background: #00b878;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 208, 132, 0.3);
+        }
+        
+        .btn-cancel {
+            background: #FF4632;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #e63b28;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 70, 50, 0.3);
+        }
+        
+        .color-info {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.4;
+            opacity: 0.9;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            user-select: none;
+        }
+        
+        .color-info:hover { opacity: 1; }
+        .color-info.copied { animation: copyPulse 0.6s ease-out; }
+        
+        @keyframes copyPulse {
+            0% { transform: translateX(-50%) scale(1); opacity: 1; }
+            50% { transform: translateX(-50%) scale(0.85); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 0.9; }
+        }
+        
+        @keyframes fallDown {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(120vh); }
+        }
+        
+        @keyframes fallFromSky {
+            0% { transform: translateY(-140vh) rotate(0.8deg); }
+            85% { transform: translateY(4px) rotate(0.2deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        
+        @keyframes fallDownFast {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(120vh); }
+        }
+        
+
+            /* Minimal toast */
+            .toast {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: rgba(0,0,0,0.8);
+                color: #fff;
+                padding: 10px 14px;
+                border-radius: 8px;
+                font-size: 12px;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+                z-index: 2001;
+                opacity: 0;
+                transform: translateY(8px);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+            }
+            .toast.show { opacity: 1; transform: translateY(0); }
+        .color-column.fall-out {
+            animation: fallDownFast 0.35s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+        
+        .color-column.drop-in {
+            animation: fallFromSky 0.8s cubic-bezier(0.25, 0.9, 0.2, 1) forwards;
+            will-change: transform;
+        }
+        
+        .color-column.preload {
+            transform: translateY(-140vh);
+        }
+        
+        .color-name {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-size: 80px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            position: absolute;
+            bottom: 40px;
+            right: 5px;
+            transform: rotate(180deg);
+            line-height: 0.8;
+            width: 100px;
+            max-height: calc(100vh - 140px);
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        @media (max-width: 768px) {
+            .color-column { min-width: 200px; }
+            .color-name { font-size: 48px; right: 10px; bottom: 30px; }
+            #burgerBtn { top: 15px; right: 15px; }
+        }
+
+        /* Re-roll button */
+        .reroll-btn {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            padding: 12px 22px;
+            border-radius: 999px;
+            border: 1px solid #e6e6e6;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: saturate(1.1) blur(8px);
+            color: #222;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            z-index: 1100;
+            transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, opacity 0.15s ease, border-color 0.2s ease;
+            opacity: 0.75;
+        }
+
+        .reroll-btn:hover {
+            transform: translateX(-50%) translateY(-2px);
+            background: rgba(255,255,255,0.95);
+            border-color: #dcdcdc;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
+            opacity: 1;
+        }
+
+        .reroll-btn:active {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .reroll-btn.cooldown {
+            opacity: 0.45;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        body.dark-mode .reroll-btn {
+            border-color: #3a3a3a;
+            background: rgba(34,34,34,0.85);
+            color: #fff;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+            opacity: 0.75;
+        }
+
+        body.dark-mode .reroll-btn:hover {
+            background: rgba(34,34,34,0.95);
+            border-color: #444;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+
+        #creatorFooter {
+            order: 9999;
+        }
+
+
+        /* Shake effect for impact (same as Untitled-1) */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            50% { transform: translateX(3px); }
+            75% { transform: translateX(-2px); }
+        }
+
+        /* Exact animations from Untitled-1 */
+        @keyframes fallHeavy {
+            0% { transform: translateY(-100vh); }
+            75% { transform: translateY(0); }
+            85% { transform: translateY(-2vh); }
+            95% { transform: translateY(0); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes fallOut {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        #palette.shake { animation: shake 0.4s ease-in-out; }
+    </style>
+</head>
+<body>
+    <button id="menuTab" onclick="toggleBurgerMenu()" aria-label="Settings">
+        <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    </button>
+    
+    <div id="burgerMenu">
+        <div class="menu-item export" onclick="exportPalette()">
+            <div class="menu-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </div>
+            <div class="menu-item-label">Export</div>
+        </div>
+        <div class="menu-item import" onclick="document.getElementById('fileInput').click()">
+            <div class="menu-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <div class="menu-item-label">Import</div>
+        </div>
+        <div class="menu-item share" onclick="sharePalette()">
+            <div class="menu-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </div>
+            <div class="menu-item-label">Share</div>
+        </div>
+        <div class="menu-item dark-mode-toggle" onclick="toggleDarkMode()">
+            <div class="menu-item-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </div>
+            <div class="menu-item-label" id="darkModeLabel">Dark</div>
+        </div>
+        <div class="font-section">
+            <h4>Typefaces</h4>
+            <div class="font-preview">
+                <div class="font-item active" style="font-family: 'Inter', sans-serif;" data-font="'Inter', sans-serif">
+                    <div class="font-item-title">Inter</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+                <div class="font-item" style="font-family: 'Roboto Serif', serif;" data-font="'Roboto Serif', serif">
+                    <div class="font-item-title">Roboto Serif</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+                <div class="font-item" style="font-family: 'IBM Plex Mono', monospace;" data-font="'IBM Plex Mono', monospace">
+                    <div class="font-item-title">IBM Plex</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+                <div class="font-item" style="font-family: 'Space Grotesk', sans-serif;" data-font="'Space Grotesk', sans-serif">
+                    <div class="font-item-title">Space Grotesk</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+                <div class="font-item" style="font-family: 'Playfair Display', serif;" data-font="'Playfair Display', serif">
+                    <div class="font-item-title">Playfair</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+                <div class="font-item" style="font-family: 'Work Sans', sans-serif;" data-font="'Work Sans', sans-serif">
+                    <div class="font-item-title">Work Sans</div>
+                    <div class="font-item-sample">Aa Bb 123</div>
+                </div>
+            </div>
+        </div>
+        <div id="creatorFooter" style="margin-top: auto; padding-top: 10px; padding-bottom: 10px; border-top: 1px solid var(--border-color, #494949); font-size: 12px; opacity: 0.85; display:flex; justify-content:center;">
+            <a id="portfolioLink" href="https://www.behance.net/cm_blacky" target="_blank" rel="noopener" class="menu-link" style="color: inherit; text-decoration: underline;">Made by me — Portfolio</a>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".svg" onchange="importPalette(event)">
+
+    <!-- Champs cachés pour stocker les couleurs -->
+    <input type="hidden" id="color1" value="#4100F5">
+    <input type="hidden" id="color2" value="#CDF564">
+    <input type="hidden" id="color3" value="#9BF0E1">
+    <input type="hidden" id="color4" value="#F037A5">
+    <input type="hidden" id="color5" value="#FF4632">
+    <input type="hidden" id="color6" value="#191414">
+    <input type="hidden" id="color7" value="#00D084">
+
+    <div id="palette"></div>
+
+    <div class="color-picker-overlay" id="colorPickerOverlay">
+        <h3>Edit color</h3>
+        <div class="color-picker-wrapper">
+            <div class="color-picker-preview" id="colorPickerPreview"></div>
+            <input type="color" id="colorPickerInput" value="#000000">
+            <div>
+                <div class="color-picker-label">Hex</div>
+                <input type="text" id="colorPickerHex" placeholder="#000000" maxlength="7">
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="btn-confirm" onclick="confirmColorChange()">Apply</button>
+            <button class="btn-cancel" onclick="cancelColorChange()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Re-roll trigger -->
+    <button id="rerollBtn" class="reroll-btn" onclick="rerollPalette()">Roll</button>
+
+    <script>
+        let currentEditingColumn, currentColors = [], currentFont = "'Inter', sans-serif", darkModeEnabled = false;
+        let lockedColors = [false, false, false, false, false, false]; // Track which colors are locked
+        let rerollCoolingDown = false; const rerollCooldownMs = 1000;
+        const animatingCols = new Set(); // Prevent re-entrance on wheel/click update
+        let paletteReady = false; // Block UI actions until columns are placed
+
+        function setUIEnabled(enabled) {
+            const tab = document.getElementById('menuTab');
+            const reroll = document.getElementById('rerollBtn');
+            const items = document.querySelectorAll('.menu-item');
+            [tab, reroll].forEach(el => { if (el) el.classList.toggle('disabled', !enabled); });
+            items.forEach(el => el.classList.toggle('disabled', !enabled));
+        }
+        
+        const colorDatabase = {
+            '#4100F5': 'Klein Blue', '#CDF564': 'Citric', '#9BF0E1': 'Aquamarine', '#F037A5': 'Fuchsia',
+            '#FF4632': 'Tangerine', '#191414': 'Black', '#00D084': 'Gradient', '#FF0000': 'Red', '#00FF00': 'Lime',
+            '#0000FF': 'Blue', '#FFFF00': 'Yellow', '#FF00FF': 'Magenta', '#00FFFF': 'Cyan', '#FFA500': 'Orange',
+            '#800080': 'Purple', '#FFC0CB': 'Pink', '#A52A2A': 'Brown', '#808080': 'Gray', '#000000': 'Black',
+            
+            '#FFFFFF': 'White', '#FFD700': 'Gold', '#C0C0C0': 'Silver', '#4B0082': 'Indigo', '#EE82EE': 'Violet',
+            '#F5DEB3': 'Wheat', '#8B4513': 'Saddle Brown', '#2F4F4F': 'Dark Slate', '#00CED1': 'Dark Turquoise',
+            '#9400D3': 'Dark Violet', '#FF1493': 'Deep Pink', '#00BFFF': 'Deep Sky', '#696969': 'Dim Gray',
+            '#1E90FF': 'Dodger Blue', '#B22222': 'Fire Brick', '#228B22': 'Forest Green', '#DCDCDC': 'Gainsboro',
+            '#DAA520': 'Goldenrod', '#008000': 'Green', '#ADFF2F': 'Green Yellow', '#F0FFF0': 'Honeydew',
+            '#FF69B4': 'Hot Pink', '#CD5C5C': 'Indian Red', '#FFFFF0': 'Ivory', '#F0E68C': 'Khaki',
+            '#E6E6FA': 'Lavender', '#7CFC00': 'Lawn Green', '#FFFACD': 'Lemon Chiffon', '#ADD8E6': 'Light Blue',
+            '#F08080': 'Light Coral', '#E0FFFF': 'Light Cyan', '#90EE90': 'Light Green', '#FFB6C1': 'Light Pink',
+            '#FFA07A': 'Light Salmon', '#20B2AA': 'Light Sea', '#87CEFA': 'Light Sky', '#778899': 'Light Slate',
+            '#B0C4DE': 'Light Steel', '#FFFFE0': 'Light Yellow', '#32CD32': 'Lime Green', '#FAF0E6': 'Linen',
+            '#800000': 'Maroon', '#66CDAA': 'Medium Aqua', '#0000CD': 'Medium Blue', '#BA55D3': 'Medium Orchid',
+            '#9370DB': 'Medium Purple', '#3CB371': 'Medium Sea', '#7B68EE': 'Medium Slate', '#00FA9A': 'Medium Spring',
+            '#48D1CC': 'Medium Turquoise', '#C71585': 'Medium Violet', '#191970': 'Midnight Blue', '#F5FFFA': 'Mint Cream',
+            '#FFE4E1': 'Misty Rose', '#FFE4B5': 'Moccasin', '#FFDEAD': 'Navajo White', '#000080': 'Navy',
+            '#FDF5E6': 'Old Lace', '#808000': 'Olive', '#6B8E23': 'Olive Drab', '#FF4500': 'Orange Red',
+            '#DA70D6': 'Orchid', '#EEE8AA': 'Pale Goldenrod', '#98FB98': 'Pale Green', '#AFEEEE': 'Pale Turquoise',
+            '#DB7093': 'Pale Violet', '#FFEFD5': 'Papaya Whip', '#FFDAB9': 'Peach Puff', '#CD853F': 'Peru',
+            '#DDA0DD': 'Plum', '#B0E0E6': 'Powder Blue', '#BC8F8F': 'Rosy Brown', '#4169E1': 'Royal Blue',
+            '#FA8072': 'Salmon', '#F4A460': 'Sandy Brown', '#2E8B57': 'Sea Green', '#FFF5EE': 'Seashell',
+            '#A0522D': 'Sienna', '#87CEEB': 'Sky Blue', '#6A5ACD': 'Slate Blue', '#708090': 'Slate Gray',
+            '#FFFAFA': 'Snow', '#00FF7F': 'Spring Green', '#4682B4': 'Steel Blue', '#D2B48C': 'Tan',
+            '#008080': 'Teal', '#D8BFD8': 'Thistle', '#FF6347': 'Tomato', '#40E0D0': 'Turquoise',
+            '#F5DEB3': 'Wheat', '#F5F5F5': 'White Smoke', '#9ACD32': 'Yellow Green',
+            '#E0FFFF': 'Azure', '#F0F8FF': 'Alice Blue', '#FAEBD7': 'Antique White', '#F5FFFA': 'Mint Cream',
+            '#E6F2FF': 'Alice Blue', '#F0FFFF': 'Azure', '#FFFAFA': 'Snow', '#F5F5DC': 'Beige',
+            '#FFE4C4': 'Bisque', '#FFEBCD': 'Blanched Almond', '#8A2BE2': 'Blue Violet', '#A9A9A9': 'Dark Gray',
+            '#006666': 'Dark Cyan', '#8B008B': 'Dark Magenta', '#556B2F': 'Dark Khaki', '#DC143C': 'Crimson',
+            '#00008B': 'Dark Blue', '#008B8B': 'Dark Cyan', '#8B0000': 'Dark Red', '#4169E1': 'Royal Blue',
+            '#1C1C1C': 'Ebon', '#2F4F4F': 'Dark Slate Gray', '#97FFFF': 'Dark Turquoise Light', '#00CED1': 'Dark Turquoise',
+            '#9400D3': 'Dark Violet', '#FF8C00': 'Dark Orange', '#8FBC8F': 'Dark Sea Green', '#3CB371': 'Medium Sea Green',
+            '#20B2AA': 'Light Sea Green', '#FFB6C1': 'Light Pink', '#FFC0CB': 'Pink', '#FFB347': 'Pastel Orange',
+            '#FFDAB9': 'Peach Puff', '#B0E0E6': 'Powder Blue', '#87CEEB': 'Sky Blue', '#87CEFA': 'Light Sky Blue',
+            '#00BFFF': 'Deep Sky Blue', '#ADD8E6': 'Light Blue', '#B0C4DE': 'Light Steel Blue', '#BFEFFF': 'Light Cyan',
+            '#D3D3D3': 'Light Gray', '#FFE4B5': 'Moccasin', '#8B7355': 'Burlywood', '#CD5C5C': 'Indian Red',
+            '#F08080': 'Light Coral', '#FA8072': 'Salmon', '#FF7F50': 'Coral', '#FFD700': 'Gold',
+            '#FFA500': 'Orange', '#FF8C00': 'Dark Orange', '#FF6347': 'Tomato', '#FF4500': 'Orange Red',
+            '#DC143C': 'Crimson', '#C71585': 'Medium Violet Red', '#FF1493': 'Deep Pink', '#FF69B4': 'Hot Pink',
+            '#FFB6C1': 'Light Pink', '#FFC0CB': 'Pink', '#FFDAB9': 'Peach Puff', '#FFEFD5': 'Papaya Whip',
+            '#FFEBCD': 'Blanched Almond', '#FFE4B5': 'Moccasin', '#FFDEAD': 'Navajo White', '#FFDBAC': 'Peach',
+            '#E9967A': 'Dark Salmon', '#F08080': 'Light Salmon', '#CD5C5C': 'Indian Red', '#8B4513': 'Saddle Brown',
+            '#A0522D': 'Sienna', '#D2B48C': 'Tan', '#DEB887': 'Burlywood', '#D2691E': 'Chocolate',
+            '#BC8F8F': 'Rosy Brown', '#CD853F': 'Peru', '#DAA520': 'Goldenrod', '#B8860B': 'Dark Goldenrod',
+            '#FFD700': 'Gold', '#FFFF00': 'Yellow', '#FFFFE0': 'Light Yellow', '#FFFACD': 'Lemon Chiffon',
+            '#FAFAD2': 'Light Goldenrod', '#FFEFD5': 'Papaya Whip', '#FFEBCD': 'Blanched Almond', '#FFDAB9': 'Peach Puff',
+            '#FFDEAD': 'Navajo White', '#FFDBAC': 'Peach', '#FFE4B5': 'Moccasin', '#ADFF2F': 'Green Yellow',
+            '#7FFF00': 'Chartreuse', '#7CFC00': 'Lawn Green', '#00FF00': 'Lime', '#32CD32': 'Lime Green',
+            '#3CB371': 'Medium Sea Green', '#2E8B57': 'Sea Green', '#228B22': 'Forest Green', '#008000': 'Green',
+            '#006400': 'Dark Green', '#556B2F': 'Dark Khaki', '#6B8E23': 'Olive Drab', '#808000': 'Olive',
+            '#9ACD32': 'Yellow Green', '#FFFACD': 'Lemon Chiffon', '#F0E68C': 'Khaki', '#EEE8AA': 'Pale Goldenrod',
+            '#BDB76B': 'Dark Khaki', '#F5DEB3': 'Wheat', '#FFD700': 'Gold', '#DAA520': 'Goldenrod',
+            '#B8860B': 'Dark Goldenrod', '#CD853F': 'Peru', '#DEB887': 'Burlywood', '#D2B48C': 'Tan',
+            '#BC8F8F': 'Rosy Brown', '#8B4513': 'Saddle Brown', '#A0522D': 'Sienna', '#D2691E': 'Chocolate',
+            '#FF8C00': 'Dark Orange', '#FFA500': 'Orange', '#FF6347': 'Tomato', '#FF4500': 'Orange Red',
+            '#DC143C': 'Crimson', '#FF0000': 'Red', '#8B0000': 'Dark Red', '#800000': 'Maroon',
+            '#CD5C5C': 'Indian Red', '#F08080': 'Light Coral', '#FA8072': 'Salmon', '#E9967A': 'Dark Salmon',
+            '#FF7F50': 'Coral', '#FF6347': 'Tomato', '#FF69B4': 'Hot Pink', '#FF1493': 'Deep Pink',
+            '#C71585': 'Medium Violet Red', '#EE82EE': 'Violet', '#DA70D6': 'Orchid', '#BA55D3': 'Medium Orchid',
+            '#9370DB': 'Medium Purple', '#8B008B': 'Dark Magenta', '#800080': 'Purple', '#4B0082': 'Indigo',
+            '#9932CC': 'Dark Orchid', '#9400D3': 'Dark Violet', '#6A0DAD': 'Blue Violet', '#8A2BE2': 'Blue Violet',
+            '#0000CD': 'Medium Blue', '#0000FF': 'Blue', '#00008B': 'Dark Blue', '#000080': 'Navy',
+            '#191970': 'Midnight Blue', '#00CED1': 'Dark Turquoise', '#40E0D0': 'Turquoise', '#20B2AA': 'Light Sea Green',
+            '#48D1CC': 'Medium Turquoise', '#7FFFD4': 'Aquamarine', '#AFEEEE': 'Pale Turquoise', '#00FFFF': 'Cyan',
+            '#00FF00': 'Lime', '#32CD32': 'Lime Green', '#00FA9A': 'Medium Spring Green', '#F0FFF0': 'Honeydew',
+            '#F5FFFA': 'Mint Cream', '#F0FFFF': 'Azure', '#E0FFFF': 'Light Cyan', '#FFFF00': 'Yellow',
+            '#FFFACD': 'Lemon Chiffon', '#FFFAF0': 'Floral White', '#FFFFF0': 'Ivory', '#FFFBF0': 'Old Lace'
+        };
+
+        // Pick a new random color for column `idx` that maintains contrast with its pair
+        const pickRandomContrastingColor = (idx) => {
+            const pairIdx = idx ^ 1;
+            const pairColor = currentColors[pairIdx] || '#000000';
+            const minContrast = 3;
+            let attempts = 0;
+            while (attempts++ < 50) {
+                const candidate = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase();
+                if (candidate !== currentColors[idx] && getContrastRatio(candidate, pairColor) >= minContrast) {
+                    return candidate;
+                }
+            }
+            // Fallback to opposite color if random attempts fail
+            return getOppositeColor(pairColor).toUpperCase();
+        };
+
+        // Animate a single column update along with its pair and gradient
+        async function animateColumnUpdate(idx, newColor) {
+            if (animatingCols.has(idx)) return;
+            animatingCols.add(idx);
+
+            // Update model and hidden input first
+            document.getElementById(`color${idx + 1}`).value = newColor;
+            currentColors[idx] = newColor;
+
+            const palette = document.getElementById('palette');
+            const primaryCol = palette.children[idx];
+            const pairIdx = idx ^ 1;
+            const pairedCol = palette.children[pairIdx];
+            const gradientCol = palette.children[6];
+            if (!primaryCol) { animatingCols.delete(idx); return; }
+
+            // Animate current versions falling out
+            primaryCol.style.animation = 'fallOut 0.4s ease-in forwards';
+            if (pairedCol) pairedCol.style.animation = 'fallOut 0.4s ease-in forwards';
+            if (gradientCol) gradientCol.style.animation = 'fallOut 0.4s ease-in forwards';
+
+            setTimeout(async () => {
+                const colors = currentColors.slice(0, 6);
+                const textColorArray = [colors[1], colors[0], colors[3], colors[2], colors[5], colors[4]];
+
+                // Update primary column content and drop-in
+                primaryCol.style.transform = 'translateY(-140vh)';
+                primaryCol.style.animation = '';
+                primaryCol.style.backgroundColor = newColor;
+                {
+                    const rgb = hexToRgb(newColor);
+                    const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+                    const name = await deduceColorName(newColor);
+                    const textColor = textColorArray[idx];
+                    primaryCol.innerHTML = `
+                        <div class="color-info" style="color: ${textColor}; font-family: ${currentFont}">
+                            ${newColor.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}
+                        </div>
+                        <div class="color-name" style="color: ${textColor}; font-family: ${currentFont}">${name}</div>
+                    `;
+                    const info = primaryCol.querySelector('.color-info');
+                    info.addEventListener('click', e => { e.stopPropagation(); copyToClipboard(newColor, info); });
+                    // Restore lock indicator
+                    const lockIndicator = document.createElement('div');
+                    lockIndicator.className = 'lock-indicator';
+                    lockIndicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+                    lockIndicator.style.display = lockedColors[idx] ? 'block' : 'none';
+                    primaryCol.appendChild(lockIndicator);
+                    primaryCol.classList.toggle('locked', lockedColors[idx]);
+                    primaryCol.style.animation = `fallHeavy 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards`;
+                }
+
+                // Update paired column visuals and drop-in (color itself unchanged)
+                if (pairedCol) {
+                    const pairColor = colors[pairIdx];
+                    pairedCol.style.transform = 'translateY(-140vh)';
+                    pairedCol.style.animation = '';
+                    pairedCol.style.backgroundColor = pairColor;
+                    const rgbP = hexToRgb(pairColor);
+                    const cmykP = rgbToCmyk(rgbP.r, rgbP.g, rgbP.b);
+                    const nameP = await deduceColorName(pairColor);
+                    const textColorP = textColorArray[pairIdx];
+                    pairedCol.innerHTML = `
+                        <div class="color-info" style="color: ${textColorP}; font-family: ${currentFont}">
+                            ${pairColor.toUpperCase()}<br>RGB ${rgbP.r} ${rgbP.g} ${rgbP.b}<br>C${cmykP.c} M${cmykP.m} Y${cmykP.y} K${cmykP.k}
+                        </div>
+                        <div class="color-name" style="color: ${textColorP}; font-family: ${currentFont}">${nameP}</div>
+                    `;
+                    const infoP = pairedCol.querySelector('.color-info');
+                    infoP.addEventListener('click', e => { e.stopPropagation(); copyToClipboard(pairColor, infoP); });
+                    // Restore lock indicator for paired column
+                    const lockIndicatorP = document.createElement('div');
+                    lockIndicatorP.className = 'lock-indicator';
+                    lockIndicatorP.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+                    lockIndicatorP.style.display = lockedColors[pairIdx] ? 'block' : 'none';
+                    pairedCol.appendChild(lockIndicatorP);
+                    pairedCol.classList.toggle('locked', lockedColors[pairIdx]);
+                    pairedCol.style.animation = `fallHeavy 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards`;
+                }
+
+                // Update gradient column and drop-in
+                if (gradientCol) {
+                    const sortedColors = sortColorsByHue(colors);
+                    const avgColor = getAverageColor(sortedColors);
+                    const gradTextColor = getOppositeColor(avgColor);
+                    const gradNames = await Promise.all(sortedColors.map(c => deduceColorName(c)));
+                    gradientCol.style.transform = 'translateY(-140vh)';
+                    gradientCol.style.animation = '';
+                    gradientCol.style.background = `linear-gradient(to bottom, ${sortedColors.join(', ')})`;
+                    gradientCol.innerHTML = `
+                        <div class="color-info" style="color: ${gradTextColor}; font-family: ${currentFont}">
+                            ${gradNames.join('<br>')}
+                        </div>
+                        <div class="color-name" style="color: ${gradTextColor}; font-family: ${currentFont}">Gradient</div>
+                    `;
+                    gradientCol.style.animation = `fallHeavy 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards`;
+                }
+
+                // Release animation lock slightly after drop-in ends
+                setTimeout(() => {
+                    animatingCols.delete(idx);
+                    // Save updated palette to localStorage
+                    localStorage.setItem('currentColors', JSON.stringify(currentColors.slice(0, 6)));
+                    updateURL();
+                }, 650);
+            }, 400);
+        }
+
+        const hex = h => h.replace('#', '');
+        const hexToRgb = h => {
+            const hex = h.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return { r, g, b };
+        };
+
+        const rgbToCmyk = (r, g, b) => {
+            let c = 1 - (r / 255), m = 1 - (g / 255), y = 1 - (b / 255), k = Math.min(c, m, y);
+            if (k === 1) return { c: 0, m: 0, y: 0, k: 100 };
+            c = Math.round(((c - k) / (1 - k)) * 100);
+            m = Math.round(((m - k) / (1 - k)) * 100);
+            y = Math.round(((y - k) / (1 - k)) * 100);
+            k = Math.round(k * 100);
+            return { c, m, y, k };
+        };
+
+        const colorDistance = (rgb1, rgb2) => Math.sqrt(
+            Math.pow(rgb1.r - rgb2.r, 2) + Math.pow(rgb1.g - rgb2.g, 2) + Math.pow(rgb1.b - rgb2.b, 2)
+        );
+
+        async function deduceColorName(hex) {
+            hex = hex.toUpperCase().replace('#', '');
+            const hexWithHash = '#' + hex;
+            
+            if (colorDatabase[hexWithHash]) return colorDatabase[hexWithHash];
+            
+            try {
+                const res = await fetch(`https://www.thecolorapi.com/id?hex=${hex}`);
+                const data = await res.json();
+                if (data?.name?.value) return data.name.value;
+            } catch (e) { console.log('API 1 failed'); }
+            
+            try {
+                const res = await fetch(`https://api.color.pizza/v1/?values=${hex}`);
+                const data = await res.json();
+                if (data?.colors?.[0]?.name) return data.colors[0].name;
+            } catch (e) { console.log('API 2 failed'); }
+            
+            try {
+                const res = await fetch(`https://www.colourlovers.com/api/color/${hex}`);
+                const data = await res.json();
+                if (data?.[0]?.title) return data[0].title;
+            } catch (e) { console.log('API 3 failed'); }
+            
+            const targetRgb = hexToRgb(hexWithHash);
+            let closestName = 'Custom', minDistance = Infinity;
+            for (const [knownHex, name] of Object.entries(colorDatabase)) {
+                const distance = colorDistance(targetRgb, hexToRgb(knownHex));
+                if (distance < minDistance) { minDistance = distance; closestName = name; }
+            }
+            if (minDistance < 30) return closestName;
+            
+            const { r, g, b } = targetRgb;
+            const brightness = (r + g + b) / 3;
+            if (brightness < 30) return 'Pitch Black';
+            if (brightness < 60) return 'Dark Night';
+            if (brightness < 100) return 'Deep Charcoal';
+            if (brightness < 150) return 'Medium Shade';
+            if (brightness > 230) return 'Pure White';
+            if (brightness > 200) return 'Bright Ivory';
+            if (brightness > 180) return 'Off-White';
+            if (r > g && r > b) return g > 100 ? 'Coral Red' : 'Deep Crimson';
+            if (g > r && g > b) return b > 100 ? 'Turquoise Green' : 'Forest Emerald';
+            if (b > r && b > g) return r > 100 ? 'Purple Haze' : 'Deep Azure';
+            const max = Math.max(r, g, b);
+            if (Math.abs(r - g) < 30 && Math.abs(g - b) < 30) return brightness > 128 ? 'Soft Gray' : 'Stone Gray';
+            return 'Mystery Color';
+        }
+
+        const getOppositeColor = hex => {
+            const rgb = hexToRgb(hex);
+            const r = 255 - rgb.r, g = 255 - rgb.g, b = 255 - rgb.b;
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        };
+
+        const getAverageColor = colors => {
+            let totalR = 0, totalG = 0, totalB = 0;
+            colors.forEach(color => {
+                const rgb = hexToRgb(color);
+                totalR += rgb.r; totalG += rgb.g; totalB += rgb.b;
+            });
+            const avgR = Math.round(totalR / colors.length);
+            const avgG = Math.round(totalG / colors.length);
+            const avgB = Math.round(totalB / colors.length);
+            return `#${avgR.toString(16).padStart(2, '0')}${avgG.toString(16).padStart(2, '0')}${avgB.toString(16).padStart(2, '0')}`;
+        };
+
+        const toggleBurgerMenu = () => {
+            if (!paletteReady) return;
+            document.getElementById('burgerMenu').classList.toggle('active');
+            document.getElementById('menuTab').classList.toggle('active');
+        };
+
+        const toggleDarkMode = () => {
+            if (!paletteReady) return;
+            darkModeEnabled = !darkModeEnabled;
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkModeEnabled', darkModeEnabled);
+            const label = document.getElementById('darkModeLabel');
+            if (label) label.textContent = darkModeEnabled ? 'Light' : 'Dark';
+        };
+
+        const initDarkMode = () => {
+            darkModeEnabled = localStorage.getItem('darkModeEnabled') === 'true';
+            if (darkModeEnabled) {
+                document.body.classList.add('dark-mode');
+                const label = document.getElementById('darkModeLabel');
+                if (label) label.textContent = 'Light';
+            }
+        };
+        
+        const getContrastRatio = (hex1, hex2) => {
+            const getLuminance = hex => {
+                const rgb = hexToRgb(hex);
+                const [r, g, b] = [rgb.r, rgb.g, rgb.b].map(x => x / 255 <= 0.03928 ? x / 255 / 12.92 : Math.pow((x / 255 + 0.055) / 1.055, 2.4));
+                return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            };
+            const lum1 = getLuminance(hex1), lum2 = getLuminance(hex2);
+            const lighter = Math.max(lum1, lum2), darker = Math.min(lum1, lum2);
+            return (lighter + 0.05) / (darker + 0.05);
+        };
+        
+        const rgbToHsv = (r, g, b) => {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = max === 0 ? 0 : (max - min) / max, v = max;
+            
+            if (max !== min) {
+                const d = max - min;
+                if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                else if (max === g) h = ((b - r) / d + 2) / 6;
+                else h = ((r - g) / d + 4) / 6;
+            }
+            return { h, s, v };
+        };
+        
+        const sortColorsByHue = colors => {
+            return colors.map((color, idx) => {
+                const rgb = hexToRgb(color);
+                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+                return { color, hue: hsv.h, originalIndex: idx };
+            }).sort((a, b) => a.hue - b.hue).map(item => item.color);
+        };
+        
+        const generatePaletteWithContrast = () => {
+            const minContrast = 3;
+            let validPalette = false;
+            let colors = [];
+
+            while (!validPalette) {
+                colors = [];
+                for (let i = 0; i < 6; i++) {
+                    if (lockedColors[i]) {
+                        colors.push(document.getElementById(`color${i + 1}`).value);
+                    } else {
+                        colors.push('#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0').toUpperCase());
+                    }
+                }
+
+                const pair1 = getContrastRatio(colors[0], colors[1]);
+                const pair2 = getContrastRatio(colors[2], colors[3]);
+                const pair3 = getContrastRatio(colors[4], colors[5]);
+
+                if (pair1 >= minContrast && pair2 >= minContrast && pair3 >= minContrast) {
+                    validPalette = true;
+                }
+            }
+
+            for (let i = 1; i <= 6; i++) {
+                document.getElementById(`color${i}`).value = colors[i - 1];
+            }
+            document.getElementById(`color7`).value = '#00D084';
+        };
+
+        document.addEventListener('click', e => {
+            const menu = document.getElementById('burgerMenu');
+            const tab = document.getElementById('menuTab');
+            if (!menu.contains(e.target) && !tab.contains(e.target)) {
+                menu.classList.remove('active');
+                tab.classList.remove('active');
+            }
+        });
+
+        const colorPickerInput = document.getElementById('colorPickerInput');
+        const colorPickerHex = document.getElementById('colorPickerHex');
+        const colorPickerPreview = document.getElementById('colorPickerPreview');
+
+        colorPickerInput.addEventListener('input', e => {
+            colorPickerHex.value = e.target.value;
+            colorPickerPreview.style.backgroundColor = e.target.value;
+        });
+
+        colorPickerHex.addEventListener('input', e => {
+            let h = e.target.value.trim();
+            if (!h.startsWith('#')) h = '#' + h;
+            if (/^#[0-9A-F]{6}$/i.test(h)) {
+                colorPickerInput.value = h;
+                colorPickerPreview.style.backgroundColor = h;
+            }
+        });
+
+        colorPickerPreview.addEventListener('click', () => colorPickerInput.click());
+
+        let fontSwitchCoolingDown = false; const fontSwitchCooldownMs = 1000;
+        document.querySelectorAll('.font-item').forEach(item => {
+            item.addEventListener('click', function() {
+                if (!paletteReady || fontSwitchCoolingDown) return;
+                fontSwitchCoolingDown = true;
+                const items = document.querySelectorAll('.font-item');
+                items.forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                currentFont = this.dataset.font;
+                items.forEach(i => i.classList.add('cooldown'));
+                applyColors();
+                setTimeout(() => {
+                    fontSwitchCoolingDown = false;
+                    items.forEach(i => i.classList.remove('cooldown'));
+                }, fontSwitchCooldownMs);
+            });
+
+            item.addEventListener('mouseenter', function() {
+                const allColumns = document.querySelectorAll('.color-column');
+                allColumns.forEach(col => {
+                    const nameEl = col.querySelector('.color-name');
+                    if (nameEl) nameEl.style.fontFamily = this.dataset.font;
+                });
+            });
+
+            item.addEventListener('mouseleave', () => {
+                const allColumns = document.querySelectorAll('.color-column');
+                allColumns.forEach(col => {
+                    const nameEl = col.querySelector('.color-name');
+                    if (nameEl) nameEl.style.fontFamily = currentFont;
+                });
+            });
+        });
+
+        function openColorPicker(columnIndex) {
+            if (columnIndex === 6) return;
+            currentEditingColumn = columnIndex;
+            const color = currentColors[columnIndex];
+            colorPickerInput.value = color;
+            colorPickerHex.value = color;
+            colorPickerPreview.style.backgroundColor = color;
+            document.getElementById('colorPickerOverlay').classList.add('active');
+        }
+        
+        function toggleLockColor(columnIndex) {
+            if (columnIndex < 6) {
+                lockedColors[columnIndex] = !lockedColors[columnIndex];
+                localStorage.setItem('lockedColors', JSON.stringify(lockedColors));
+                const column = document.querySelectorAll('.color-column')[columnIndex];
+                if (column) {
+                    column.classList.toggle('locked', lockedColors[columnIndex]);
+                }
+            }
+        }
+        
+        const initLockedColors = () => {
+            const saved = localStorage.getItem('lockedColors');
+            if (saved) {
+                lockedColors = JSON.parse(saved);
+            }
+        };
+
+        async function confirmColorChange() {
+            if (currentEditingColumn === null) return;
+            let newColor = colorPickerInput.value;
+            if (!newColor.startsWith('#')) newColor = '#' + newColor;
+            await animateColumnUpdate(currentEditingColumn, newColor);
+            document.getElementById('colorPickerOverlay').classList.remove('active');
+            currentEditingColumn = null;
+        }
+
+        const cancelColorChange = () => {
+            document.getElementById('colorPickerOverlay').classList.remove('active');
+            currentEditingColumn = null;
+        };
+
+        async function exportPalette() {
+            if (!paletteReady) return;
+            const colors = currentColors.slice(0, 6);
+            const colorNames = [];
+            for (let i = 0; i < 6; i++) colorNames.push(await deduceColorName(colors[i]));
+            colorNames.push('Gradient');
+
+            const svgWidth = 1400, svgHeight = 800, colWidth = svgWidth / 7;
+            // Sort colors by hue for gradient
+            const sortedColors = sortColorsByHue(colors);
+            let svg = `<?xml version="1.0" encoding="UTF-8"?><svg width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%" gradientUnits="objectBoundingBox">`;
+            // Embed gradient with stops from sorted colors - distribute evenly from 0% to 100%
+            for (let i = 0; i < sortedColors.length; i++) {
+                const offset = (i / (sortedColors.length - 1)) * 100;
+                svg += `<stop offset="${offset}%" style="stop-color:${sortedColors[i]};stop-opacity:1" />`;
+            }
+            svg += `</linearGradient></defs><metadata><palette>`;
+            for (let i = 0; i < 7; i++) svg += `<color index="${i}">${i === 6 ? '#GRADIENT' : colors[i]}</color>`;
+            svg += `</palette></metadata>`;
+
+            for (let i = 0; i < 6; i++) {
+                const x = i * colWidth;
+                const textColor = [colors[1], colors[0], colors[3], colors[2], colors[5], colors[4]][i];
+                const rgb = hexToRgb(colors[i]);
+                const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+                svg += `<rect x="${x}" y="0" width="${colWidth}" height="${svgHeight}" fill="${colors[i]}" />`;
+                // Small labels centered (match site positions)
+                const centerX = x + colWidth / 2;
+                const yBase = 40;
+                svg += `<text x="${centerX}" y="${yBase}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="600" font-style="normal" fill="${textColor}">${colors[i].toUpperCase()}</text>`;
+                svg += `<text x="${centerX}" y="${yBase + 15}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="600" font-style="normal" fill="${textColor}">HEX ${colors[i].substring(1).toUpperCase()}</text>`;
+                svg += `<text x="${centerX}" y="${yBase + 30}" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="600" font-style="normal" fill="${textColor}">C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}</text>`;
+                // Big vertical color name at bottom-right, rotated 180 to match site
+                const name = colorNames[i].toUpperCase();
+                const nx = x + colWidth - 5; // right: 5px
+                const ny = svgHeight - 40;   // bottom: 40px
+                svg += `<text x="${nx}" y="${ny}" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="900" font-style="normal" fill="${textColor}" writing-mode="tb" glyph-orientation-vertical="0" transform="rotate(270 ${nx} ${ny})">${name}</text>`;
+            }
+
+            const avgColor = getAverageColor(sortedColors);
+            const gradientTextColor = getOppositeColor(avgColor);
+            // Gradient column using the sorted colors
+            svg += `<rect x="${6 * colWidth}" y="0" width="${colWidth}" height="${svgHeight}" fill="url(#gradient)" />`;
+            const gCenterX = 6 * colWidth + colWidth / 2;
+            svg += `<text x="${gCenterX}" y="40" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="600" font-style="normal" fill="${gradientTextColor}">GRADIENT</text>`;
+            svg += `<text x="${gCenterX}" y="55" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="11" font-weight="600" font-style="normal" fill="${gradientTextColor}">AUTO-GENERATED</text>`;
+            const gnx = 6 * colWidth + colWidth - 5;
+            const gny = svgHeight - 40;
+            svg += `<text x="${gnx}" y="${gny}" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="900" font-style="normal" fill="${gradientTextColor}" writing-mode="tb" glyph-orientation-vertical="0" transform="rotate(270 ${gnx} ${gny})">GRADIENT</text>`;
+            svg += `</svg>`;
+
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'palette.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toggleBurgerMenu();
+        }
+
+        function importPalette(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const svgDoc = new DOMParser().parseFromString(e.target.result, 'image/svg+xml');
+                const colorElements = svgDoc.querySelectorAll('metadata palette color');
+                if (colorElements.length >= 7) {
+                    for (let i = 0; i < 7; i++) {
+                        const colorValue = colorElements[i].textContent.trim();
+                        if (colorValue !== '#GRADIENT') document.getElementById(`color${i + 1}`).value = colorValue;
+                    }
+                    applyColors();
+                } else {
+                    alert('Format de palette invalide.');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+            toggleBurgerMenu();
+        }
+
+        const generateRandomColors = () => {
+            if (!paletteReady) return;
+            generatePaletteWithContrast();
+            applyColors();
+            toggleBurgerMenu();
+        };
+
+        async function applyColors() {
+            const palette = document.getElementById('palette');
+            // Hide during setup to avoid any flicker
+            palette.style.visibility = 'hidden';
+            palette.innerHTML = '';
+            paletteReady = false;
+            setUIEnabled(false);
+            const colors = [];
+            for (let i = 1; i <= 7; i++) colors.push(document.getElementById(`color${i}`).value || '#000000');
+            currentColors = [...colors];
+
+            // Six color columns (left to right)
+            const allCols = [];
+            for (let index = 0; index < 6; index++) {
+                const color = colors[index];
+                const column = document.createElement('div');
+                column.className = 'color-column preload';
+                if (lockedColors[index]) column.classList.add('locked');
+                column.addEventListener('click', () => openColorPicker(index));
+                column.style.backgroundColor = color;
+                const textColor = [colors[1], colors[0], colors[3], colors[2], colors[5], colors[4]][index];
+                const rgb = hexToRgb(color);
+                const cmyk = rgbToCmyk(rgb.r, rgb.g, rgb.b);
+                const name = await deduceColorName(color);
+                column.innerHTML = `
+                    <div class="color-info" style="color: ${textColor}; font-family: ${currentFont}">
+                        ${color.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}
+                    </div>
+                    <div class="color-name" style="color: ${textColor}; font-family: ${currentFont}">${name}</div>
+                `;
+                const lockIndicator = document.createElement('div');
+                lockIndicator.className = 'lock-indicator';
+                lockIndicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
+                lockIndicator.style.display = lockedColors[index] ? 'block' : 'none';
+                column.appendChild(lockIndicator);
+                palette.appendChild(column);
+                const colorInfo = column.querySelector('.color-info');
+                colorInfo.addEventListener('click', e => { e.stopPropagation(); copyToClipboard(color, colorInfo); });
+                // Hover handling delegated at palette level
+                // Wheel: up = toggle lock; down = change this column (and update pair + gradient)
+                column.addEventListener('wheel', async (e) => {
+                    e.preventDefault();
+                    if (!paletteReady) return;
+                    if (e.deltaY < 0) {
+                        // Toggle lock on scroll up
+                        lockedColors[index] = !lockedColors[index];
+                        localStorage.setItem('lockedColors', JSON.stringify(lockedColors));
+                        column.classList.toggle('locked', lockedColors[index]);
+                        const li = column.querySelector('.lock-indicator');
+                        if (li) li.style.display = lockedColors[index] ? 'block' : 'none';
+                        return;
+                    }
+                    if (lockedColors[index]) return;
+                    if (animatingCols.has(index)) return;
+                    const newColor = pickRandomContrastingColor(index);
+                    await animateColumnUpdate(index, newColor);
+                }, { passive: false });
+                allCols.push(column);
+            }
+
+            // Gradient column at far right
+            const sortedColors = sortColorsByHue(colors.slice(0, 6));
+            const gradientColumn = document.createElement('div');
+            gradientColumn.className = 'color-column preload';
+            gradientColumn.style.background = `linear-gradient(to bottom, ${sortedColors.join(', ')})`;
+            const avgColor = getAverageColor(sortedColors);
+            const gradTextColor = getOppositeColor(avgColor);
+            const gradNames = await Promise.all(sortedColors.map(c => deduceColorName(c)));
+            gradientColumn.innerHTML = `
+                <div class="color-info" style="color: ${gradTextColor}; font-family: ${currentFont}">
+                    ${gradNames.join('<br>')}
+                </div>
+                <div class="color-name" style="color: ${gradTextColor}; font-family: ${currentFont}">Gradient</div>
+            `;
+            palette.appendChild(gradientColumn);
+            allCols.push(gradientColumn);
+            // Hover handling delegated at palette level
+
+            // Hover-based color changes removed
+
+            // Apply Untitled-1 creation animation with random delay and impact
+            // Use RAF to ensure preload transform applies before animation starts
+            requestAnimationFrame(() => {
+                let completed = 0;
+                const total = allCols.length;
+                const onEnd = () => {
+                    completed++;
+                    if (completed >= total) {
+                        paletteReady = true;
+                        setUIEnabled(true);
+                        updateURL();
+                    }
+                };
+                allCols.forEach((col) => {
+                    const delay = Math.random() * 1.0; // faster stagger
+                    col.style.transform = 'translateY(-140vh)';
+                    col.classList.remove('preload');
+                    col.style.animation = `fallHeavy 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards ${delay}s`;
+                    setTimeout(() => {
+                        palette.classList.add('shake');
+                        setTimeout(() => palette.classList.remove('shake'), 80);
+                    }, delay * 1000 + 450);
+                    col.addEventListener('animationend', onEnd, { once: true });
+                });
+                palette.style.visibility = 'visible';
+            });
+            // Save current palette to localStorage
+            localStorage.setItem('currentColors', JSON.stringify(colors.slice(0, 6)));
+        }
+        
+        const copyToClipboard = (hex, element) => {
+            navigator.clipboard.writeText(hex).then(() => {
+                element.classList.add('copied');
+                setTimeout(() => element.classList.remove('copied'), 500);
+            }).catch(err => console.error('Erreur copie:', err));
+        };
+
+        const showToast = (msg) => {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.classList.add('show'));
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => t.remove(), 200);
+            }, 1800);
+        };
+
+        const getCurrentPaletteLink = () => {
+            const colors = [];
+            for (let i = 1; i <= 6; i++) {
+                const v = (document.getElementById(`color${i}`).value || '').toUpperCase();
+                colors.push(/^#[0-9A-F]{6}$/i.test(v) ? v : '#000000');
+            }
+            const params = new URLSearchParams();
+            params.set('palette', colors.join('-'));
+            params.set('font', encodeURIComponent(currentFont));
+            params.set('dark', darkModeEnabled ? '1' : '0');
+            return `${location.origin}${location.pathname}?${params.toString()}`;
+        };
+
+        const updateURL = () => {
+            const colors = [];
+            for (let i = 1; i <= 6; i++) {
+                const v = (document.getElementById(`color${i}`).value || '').toUpperCase();
+                colors.push(/^#[0-9A-F]{6}$/i.test(v) ? v : '#000000');
+            }
+            const params = new URLSearchParams();
+            params.set('palette', colors.join('-'));
+            params.set('font', encodeURIComponent(currentFont));
+            params.set('dark', darkModeEnabled ? '1' : '0');
+            const newURL = `${location.pathname}?${params.toString()}`;
+            history.replaceState(null, '', newURL);
+        };
+
+        async function sharePalette() {
+            if (!paletteReady) return;
+            const url = getCurrentPaletteLink();
+            try {
+                if (navigator.share) {
+                    await navigator.share({ title: 'My Palette', url });
+                    showToast('Shared');
+                } else if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(url);
+                    showToast('Link copied');
+                } else {
+                    // Fallback: prompt
+                    window.prompt('Copy this link', url);
+                }
+            } catch (e) {
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(url);
+                    showToast('Link copied');
+                }
+            }
+            toggleBurgerMenu();
+        }
+
+        const parsePaletteFromURL = () => {
+            const qs = new URLSearchParams(location.search);
+            const pal = qs.get('palette') || qs.get('p');
+            if (pal) {
+                const parts = pal.split(/[,\-]/).map(s => s.trim());
+                if (parts.length >= 6) {
+                    for (let i = 0; i < 6; i++) {
+                        let hex = parts[i];
+                        if (!hex.startsWith('#')) hex = '#' + hex;
+                        if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                            document.getElementById(`color${i + 1}`).value = hex.toUpperCase();
+                        }
+                    }
+                }
+            }
+            const f = qs.get('font');
+            if (f) {
+                try {
+                    const decoded = decodeURIComponent(f);
+                    currentFont = decoded;
+                    // Reflect active font visually
+                    document.querySelectorAll('.font-item').forEach(i => {
+                        i.classList.toggle('active', i.dataset.font === decoded);
+                    });
+                } catch {}
+            }
+            const d = qs.get('dark');
+            if (d === '1') {
+                if (!darkModeEnabled) toggleDarkMode();
+            }
+        };
+
+        function rerollPalette() {
+            if (!paletteReady || rerollCoolingDown) return;
+            rerollCoolingDown = true;
+            const btn = document.getElementById('rerollBtn');
+            if (btn) btn.classList.add('cooldown');
+            const palette = document.getElementById('palette');
+            const cols = palette.querySelectorAll('.color-column');
+            cols.forEach((col) => {
+                col.style.animation = 'fallOut 0.4s ease-in forwards';
+            });
+            palette.classList.add('shake');
+            setTimeout(() => palette.classList.remove('shake'), 300);
+            setTimeout(async () => {
+                generatePaletteWithContrast();
+                await applyColors();
+            }, 450);
+            setTimeout(() => {
+                rerollCoolingDown = false;
+                if (btn) btn.classList.remove('cooldown');
+            }, rerollCooldownMs);
+        }
+
+        window.addEventListener('load', () => {
+            initDarkMode();
+            initLockedColors();
+            parsePaletteFromURL();
+
+            // Load saved palette if available; otherwise use defaults in hidden inputs
+            const saved = localStorage.getItem('currentColors');
+            if (saved) {
+                try {
+                    const arr = JSON.parse(saved);
+                    if (Array.isArray(arr) && arr.length >= 6) {
+                        for (let i = 1; i <= 6; i++) {
+                            if (typeof arr[i - 1] === 'string' && /^#[0-9A-F]{6}$/i.test(arr[i - 1])) {
+                                document.getElementById(`color${i}`).value = arr[i - 1].toUpperCase();
+                            }
+                        }
+                    }
+                } catch (e) { /* ignore malformed storage */ }
+            }
+            // Ensure gradient control stays to default
+            document.getElementById('color7').value = '#00D084';
+            applyColors();
+            // Set legal year
+            const yEl = document.getElementById('legalYear');
+            if (yEl) yEl.textContent = new Date().getFullYear().toString();
+        });
+    </script>
+</body>
+</html>
