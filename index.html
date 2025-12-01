@@ -75,8 +75,8 @@
     </script>
 </head>
 <body>
-    <!-- Onboarding overlay showing wheel controls before colors load -->
-    <div id="onboardOverlay" class="onboard-overlay" aria-modal="true" role="dialog">
+    <!-- Desktop Onboarding overlay showing wheel controls -->
+    <div id="onboardOverlay" class="onboard-overlay desktop-only" aria-modal="true" role="dialog">
         <div class="onboard-card">
             <h3 class="onboard-title">Wheel Controls</h3>
             <div class="onboard-content">
@@ -100,6 +100,109 @@
             </div>
         </div>
     </div>
+    <!-- Mobile Onboarding overlay showing swipe controls -->
+    <div id="onboardOverlayMobile" class="onboard-overlay mobile-only" aria-modal="true" role="dialog">
+        <div class="onboard-card">
+            <h3 class="onboard-title">Swipe Controls</h3>
+            <div class="onboard-content">
+                <div class="onboard-row">
+                    <div class="onboard-icons">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div class="onboard-text"><strong>Swipe Left</strong><br>Lock / Unlock this color</div>
+                </div>
+                <div class="onboard-row">
+                    <div class="onboard-icons">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a10 10 0 0 1 14.85-3.36L23 10"></path><path d="M1 14l4.64 4.64A10 10 0 0 0 20.49 15"></path></svg>
+                    </div>
+                    <div class="onboard-text"><strong>Swipe Right</strong><br>Reroll only this color</div>
+                </div>
+                <div class="onboard-tip">
+                    💡 <strong>Tip:</strong> For the best experience, visit us on desktop!
+                </div>
+            </div>
+            <div class="onboard-actions">
+                <button class="btn-confirm" onclick="dismissOnboarding()">Got it</button>
+            </div>
+        </div>
+    </div>
+    <!-- Mobile Settings Overlay -->
+    <div id="mobileSettingsOverlay" class="mobile-settings-overlay">
+        <div class="mobile-settings-header">
+            <h3>Settings</h3>
+            <button class="close-settings-btn" onclick="closeMobileSettings()" aria-label="Close settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <line x1="6" y1="18" x2="18" y2="6"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="mobile-settings-content">
+            <div class="mobile-settings-section">
+                <div class="menu-item export" onclick="exportPalette(); closeMobileSettings();">
+                    <div class="menu-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </div>
+                    <div class="menu-item-label">Export</div>
+                </div>
+                <div class="menu-item import" onclick="document.getElementById('fileInput').click(); closeMobileSettings();">
+                    <div class="menu-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    </div>
+                    <div class="menu-item-label">Import</div>
+                </div>
+                <div class="menu-item share" onclick="sharePalette(); closeMobileSettings();">
+                    <div class="menu-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    </div>
+                    <div class="menu-item-label">Share</div>
+                </div>
+                <div class="menu-item dark-mode-toggle" onclick="toggleDarkMode()">
+                    <div class="menu-item-icon">
+                        <svg id="moonIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <svg id="sunIconMobile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                    </div>
+                    <div class="menu-item-label" id="darkModeLabelMobile">Dark</div>
+                </div>
+            </div>
+            <div class="mobile-settings-section">
+                <h4>Typefaces</h4>
+                <div class="font-preview">
+                    <div class="font-item font-item-mobile active" style="font-family: 'Inter', sans-serif;" data-font="'Inter', sans-serif">
+                        <div class="font-item-title">Inter</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                    <div class="font-item font-item-mobile" style="font-family: 'Roboto Serif', serif;" data-font="'Roboto Serif', serif">
+                        <div class="font-item-title">Roboto Serif</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                    <div class="font-item font-item-mobile" style="font-family: 'IBM Plex Mono', monospace;" data-font="'IBM Plex Mono', monospace">
+                        <div class="font-item-title">IBM Plex</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                    <div class="font-item font-item-mobile" style="font-family: 'Space Grotesk', sans-serif;" data-font="'Space Grotesk', sans-serif">
+                        <div class="font-item-title">Space Grotesk</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                    <div class="font-item font-item-mobile" style="font-family: 'Playfair Display', serif;" data-font="'Playfair Display', serif">
+                        <div class="font-item-title">Playfair</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                    <div class="font-item font-item-mobile" style="font-family: 'Work Sans', sans-serif;" data-font="'Work Sans', sans-serif">
+                        <div class="font-item-title">Work Sans</div>
+                        <div class="font-item-sample">Aa Bb 123</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-settings-footer">
+                <a href="https://www.linkedin.com/in/charlie-barbaud/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Made by me — Contact</a>
+                <a href="legal.html" style="color: inherit; text-decoration: underline; font-size: 11px; opacity: 0.7;">Legal</a>
+            </div>
+        </div>
+    </div>
+
     <button id="menuTab" onclick="toggleBurgerMenu()" aria-label="Settings">
         <svg class="arrow" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6"></path>
@@ -213,17 +316,35 @@
         </div>
     </div>
 
-    <!-- Re-roll trigger -->
-    <button id="rerollBtn" class="reroll-btn" onclick="rerollPalette()">Roll</button>
-    
-    <!-- Export trigger -->
-    <button id="exportBtn" class="export-btn" onclick="exportPalette()" aria-label="Export palette">
+    <!-- Desktop buttons -->
+    <button id="rerollBtn" class="reroll-btn desktop-only" onclick="rerollPalette()">Roll</button>
+    <button id="exportBtn" class="export-btn desktop-only" onclick="exportPalette()" aria-label="Export palette">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
             <polyline points="7 10 12 15 17 10"></polyline>
             <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
     </button>
+    
+    <!-- Mobile bottom controls -->
+    <div id="mobileControls" class="mobile-controls mobile-only">
+        <button class="mobile-btn mobile-btn-roll" onclick="rerollPalette()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a10 10 0 0 1 14.85-3.36L23 10"></path>
+                <path d="M1 14l4.64 4.64A10 10 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Roll</span>
+        </button>
+                <button class="mobile-btn mobile-btn-settings" onclick="openMobileSettings()">
+                        <!-- Dynamic dark/light settings icon using currentColor -->
+                        <svg width="32" height="32" viewBox="0 0 169 166" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M84.3088 3C87.9983 3 91.6302 3.24678 95.1897 3.72168L104.192 24.1758C109.491 25.9215 114.482 28.3462 119.062 31.3467L140.67 25.6309C145.916 30.6549 150.491 36.3736 154.249 42.6387L143.868 62.4336C145.755 67.5229 147.006 72.9196 147.53 78.5283L165.48 91.8643C164.817 99.2654 163.164 106.381 160.656 113.079L138.686 117.309C135.822 122.045 132.357 126.377 128.396 130.199L129.16 152.559C123.14 156.534 116.56 159.732 109.566 162.01L92.5579 147.468C89.8577 147.818 87.1044 148 84.3088 148C81.5129 148 78.7593 147.818 76.0588 147.468L59.051 162.01C52.0563 159.732 45.4769 156.534 39.4563 152.559L40.2209 130.199C36.2601 126.377 32.7948 122.045 29.9309 117.309L7.96216 113.079C5.45374 106.381 3.8008 99.2654 3.13794 91.8643L21.0872 78.5283C21.6103 72.92 22.8623 67.5236 24.7483 62.4346L14.3674 42.6387C18.1253 36.3736 22.7005 30.6549 27.9465 25.6309L49.5549 31.3467C54.1347 28.3461 59.1256 25.9216 64.425 24.1758L73.427 3.72168C76.9868 3.24669 80.6191 3 84.3088 3ZM84.3088 48C64.1504 48 47.8088 64.3416 47.8088 84.5C47.8088 104.658 64.1504 121 84.3088 121C104.467 121 120.809 104.658 120.809 84.5C120.809 64.3416 104.467 48 84.3088 48Z" stroke="currentColor" stroke-width="6"/>
+                        </svg>
+                        <span>Settings</span>
+                </button>
+    </div>
     <script src="js/app.js" defer></script>
 </body>
 </html>

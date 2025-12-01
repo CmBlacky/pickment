@@ -8,9 +8,9 @@ body.dark-mode{background:#1a1a1a;color:#fff}
 #menuTab:hover{background:#f5f5f5}
 #menuTab.active{right:calc(100vw / 8)}
 body.dark-mode #menuTab{background:#2a2a2a;color:#fff}
-#burgerMenu{position:relative;width:0;height:100vh;background:rgba(255,255,255,.85);backdrop-filter:saturate(1.2) blur(10px);z-index:1000;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.18);transition:width .3s ease;display:flex;flex-direction:column;flex-shrink:0;border-left:1px solid #eaeaea}
+#burgerMenu{position:relative;width:0;height:100vh;background:rgba(255,255,255,.85);backdrop-filter:saturate(1.2) blur(10px);z-index:1000;overflow-y:auto;overflow-x:hidden;box-shadow:none;transition:width .3s ease,box-shadow .3s ease;display:flex;flex-direction:column;flex-shrink:0;border-left:1px solid #eaeaea}
 body.dark-mode #burgerMenu{background:rgba(34,34,34,.85);backdrop-filter:saturate(1.2) blur(10px);border-left-color:#3a3a3a}
-#burgerMenu.active{width:calc(100vw / 8)}
+#burgerMenu.active{width:calc(100vw / 8);box-shadow:-4px 0 24px rgba(0,0,0,.18)}
 .menu-item{padding:12px;cursor:pointer;border-bottom:1px solid #efefef;transition:background .2s ease,transform .1s ease;display:grid;grid-template-columns:24px 1fr;align-items:center;gap:10px;font-weight:600;font-size:12px;order:2;border-radius:8px;margin:6px 8px}
 body.dark-mode .menu-item{border-bottom-color:#3a3a3a;color:#fff}
 .menu-item:hover{background:#f7f7f7}
@@ -102,9 +102,9 @@ body.dark-mode .help-section h4{color:#aaa}
 .help-row strong{font-weight:600}
 
 /* Onboarding overlay */
-.onboard-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(1.1) blur(6px);display:none;align-items:center;justify-content:center;z-index:3000}
-.onboard-overlay.active{display:flex}
-.onboard-card{width:min(520px,92vw);background:#fff;color:#111;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);padding:20px 18px 16px;display:flex;flex-direction:column;gap:14px}
+.onboard-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(1.1) blur(6px);display:none;align-items:center;justify-content:center;z-index:3000;pointer-events:none}
+.onboard-overlay.active{display:flex;pointer-events:auto}
+.onboard-card{width:min(520px,92vw);background:#fff;color:#111;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.25);padding:20px 18px 16px;display:flex;flex-direction:column;gap:14px;position:relative;z-index:3001}
 body.dark-mode .onboard-card{background:#2a2a2a;color:#fff}
 .onboard-title{font-size:14px;font-weight:800;letter-spacing:.2px}
 .onboard-content{display:grid;gap:12px}
@@ -113,6 +113,62 @@ body.dark-mode .onboard-card{background:#2a2a2a;color:#fff}
 body.dark-mode .onboard-icons{color:#bbb}
 .onboard-icons svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .onboard-text{font-size:12px;line-height:1.35}
+.onboard-tip{padding:12px;background:rgba(65,0,245,.08);border-radius:8px;font-size:11px;line-height:1.5;margin-top:4px;text-align:center}
+body.dark-mode .onboard-tip{background:rgba(125,93,255,.12)}
 .onboard-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
-/* Make 'Suivant' match color picker's Apply button */
 .onboard-actions .btn-confirm{padding:12px 28px;border:none;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;transition:all .2s;min-width:120px}
+
+/* Mobile responsive design */
+.mobile-only{display:none!important}
+.mobile-settings-overlay{display:none!important}
+
+@media (max-width:768px){
+.mobile-only{display:flex!important}
+/* Override for onboarding overlay: must be hidden unless active */
+.onboard-overlay.mobile-only{display:none!important}
+.onboard-overlay.mobile-only.active{display:flex!important}
+.desktop-only{display:none!important}
+.mobile-settings-overlay{display:flex!important;visibility:hidden;pointer-events:none}
+body{flex-direction:column!important}
+#palette{flex-direction:column!important;height:auto!important;flex:1 1 auto!important;overflow:hidden!important}
+.color-column{min-height:0!important;width:100%!important;flex:1 1 auto!important;position:relative;touch-action:pan-y}
+.color-name{writing-mode:horizontal-tb!important;font-size:32px!important;bottom:15px!important;right:auto!important;left:20px!important;top:auto!important;transform:none!important;width:auto!important;max-width:calc(100% - 100px)!important;text-align:left!important}
+.color-info{left:20px!important;top:20px!important;transform:none!important;text-align:left!important;font-size:10px!important}
+.lock-indicator{top:50%!important;right:20px!important;transform:translateY(-50%)!important}
+#menuTab,#burgerMenu{display:none!important}
+.mobile-controls{position:sticky;bottom:0;left:0;right:0;width:100%;height:var(--mobile-bottom-bar-height, 80px);background:rgba(255,255,255,.95);backdrop-filter:saturate(1.2) blur(10px);border-top:1px solid #e6e6e6;display:flex;align-items:center;justify-content:space-around;padding:0 20px;padding-bottom:env(safe-area-inset-bottom, 0px);z-index:10;gap:16px}
+body.dark-mode .mobile-controls{background:rgba(26,26,26,.95);border-top-color:#3a3a3a}
+.mobile-btn{flex:1;max-width:200px;height:56px;border-radius:12px;border:1px solid #e6e6e6;background:rgba(255,255,255,.9);color:#222;font-weight:700;font-size:14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.mobile-btn svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.mobile-btn span{font-size:12px;letter-spacing:.3px}
+.mobile-btn:active{transform:scale(.95)}
+body.dark-mode .mobile-btn{background:rgba(42,42,42,.9);border-color:#3a3a3a;color:#fff}
+.mobile-btn-roll{background:linear-gradient(135deg,#4100F5,#7d5dff);color:#fff;border:none}
+body.dark-mode .mobile-btn-roll{background:linear-gradient(135deg,#7d5dff,#9d7dff)}
+.mobile-settings-overlay{position:fixed;inset:0;background:#fff;z-index:2500;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1),visibility 0s .3s}
+.mobile-settings-overlay.active{visibility:visible;pointer-events:auto;transform:translateY(0);transition:transform .3s cubic-bezier(.4,0,.2,1),visibility 0s 0s}
+.mobile-settings-overlay.closing{visibility:visible;pointer-events:none;transform:translateY(100%)}
+body.dark-mode .mobile-settings-overlay{background:#1a1a1a}
+.mobile-settings-header{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid #e6e6e6}
+body.dark-mode .mobile-settings-header{border-bottom-color:#3a3a3a}
+.mobile-settings-header h3{font-size:20px;font-weight:700}
+.close-settings-btn{width:40px;height:40px;border-radius:50%;border:1px solid #e6e6e6;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;color:#222}
+.close-settings-btn svg{width:20px;height:20px}
+.close-settings-btn:active{transform:scale(.9)}
+body.dark-mode .close-settings-btn{background:#2a2a2a;border-color:#3a3a3a;color:#fff}
+.mobile-settings-content{flex:1;overflow-y:auto;padding:0 0 20px 0}
+.mobile-settings-section{padding:20px;border-bottom:1px solid #efefef}
+.mobile-settings-section h4{font-size:12px;text-transform:uppercase;color:#999;margin-bottom:12px;font-weight:700;letter-spacing:.5px}
+body.dark-mode .mobile-settings-section{border-bottom-color:#3a3a3a}
+body.dark-mode .mobile-settings-section h4{color:#aaa}
+.mobile-settings-footer{padding:20px;text-align:center;font-size:12px;display:flex;flex-direction:column;gap:8px;opacity:.85}
+.mobile-settings-footer a{color:inherit;text-decoration:underline}
+.color-column.swipe-lock{animation:swipeLockAnim .3s ease-out}
+.color-column.swipe-reroll{animation:swipeRerollAnim .3s ease-out}
+@keyframes swipeLockAnim{0%{transform:translateX(0)}50%{transform:translateX(-30px)}100%{transform:translateX(0)}}
+@keyframes swipeRerollAnim{0%{transform:translateX(0)}50%{transform:translateX(30px)}100%{transform:translateX(0)}}
+
+/* Override drop-in / drop-out animations to horizontal on mobile */
+@keyframes fallHeavy{0%{transform:translateX(-100vw)}75%{transform:translateX(0)}85%{transform:translateX(-2vw)}95%{transform:translateX(0)}100%{transform:translateX(0)}}
+@keyframes fallOut{0%{transform:translateX(0)}100%{transform:translateX(100vw)}}
+}

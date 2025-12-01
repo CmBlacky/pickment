@@ -5,6 +5,14 @@ let rerollCoolingDown = false; const rerollCooldownMs = 1000;
 const animatingCols = new Set();
 let paletteReady = false;
 
+// Treat mobile based on input capability / user agent, not viewport width
+function isMobileDevice(){
+  try{
+    return (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+           /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }catch(e){ return false; }
+}
+
 function setUIEnabled(enabled) {
   const tab = document.getElementById('menuTab');
   const reroll = document.getElementById('rerollBtn');
@@ -44,7 +52,7 @@ async function animateColumnUpdate(idx, newColor){
   setTimeout(async () => {
     const colors = currentColors.slice(0,6);
     const textColorArray = [colors[1],colors[0],colors[3],colors[2],colors[5],colors[4]];
-    primaryCol.style.transform = 'translateY(-140vh)';
+    primaryCol.style.transform = isMobileDevice() ? 'translateX(-140vw)' : 'translateY(-140vh)';
     primaryCol.style.animation = '';
     primaryCol.style.backgroundColor = newColor;
     {
@@ -67,7 +75,7 @@ async function animateColumnUpdate(idx, newColor){
     }
     if (pairedCol){
       const pairColor = colors[pairIdx];
-      pairedCol.style.transform = 'translateY(-140vh)';
+      pairedCol.style.transform = isMobileDevice() ? 'translateX(-140vw)' : 'translateY(-140vh)';
       pairedCol.style.animation = '';
       pairedCol.style.backgroundColor = pairColor;
       const rgbP = hexToRgb(pairColor);
@@ -92,10 +100,11 @@ async function animateColumnUpdate(idx, newColor){
       const avgColor = getAverageColor(sortedColors);
       const gradTextColor = getOppositeColor(avgColor);
       const gradNames = await Promise.all(sortedColors.map(c=>deduceColorName(c)));
-      gradientCol.style.transform = 'translateY(-140vh)';
+      gradientCol.style.transform = isMobileDevice() ? 'translateX(-140vw)' : 'translateY(-140vh)';
       gradientCol.style.animation = '';
-      gradientCol.style.background = `linear-gradient(to bottom, ${sortedColors.join(', ')})`;
-      gradientCol.innerHTML = `<div class="color-info" style="color:${gradTextColor};font-family:${currentFont}">${gradNames.join('<br>')}</div><div class="color-name" style="color:${gradTextColor};font-family:${currentFont}">Gradient</div>`;
+      const gradDirection = isMobileDevice() ? 'to right' : 'to bottom';
+      gradientCol.style.background = `linear-gradient(${gradDirection}, ${sortedColors.join(', ')})`;
+      gradientCol.innerHTML = `<div class="color-name" style="color:${gradTextColor};font-family:${currentFont}">Gradient</div>`;
       gradientCol.style.animation = 'fallHeavy .6s cubic-bezier(0.68,-0.55,0.265,1.55) forwards';
     }
     setTimeout(()=>{
@@ -161,8 +170,8 @@ function importPalette(event){ const file=event.target.files[0]; if(!file) retur
 const generateRandomColors=()=>{ if(!paletteReady) return; generatePaletteWithContrast(); applyColors(); toggleBurgerMenu(); };
 
 async function applyColors(){ const palette=document.getElementById('palette'); palette.style.visibility='hidden'; palette.innerHTML=''; paletteReady=false; setUIEnabled(false); const colors=[]; for(let i=1;i<=7;i++) colors.push(document.getElementById(`color${i}`).value||'#000000'); currentColors=[...colors]; const allCols=[]; for(let index=0; index<6; index++){ const color=colors[index]; const column=document.createElement('div'); column.className='color-column preload'; if(lockedColors[index]) column.classList.add('locked'); column.addEventListener('click',()=>openColorPicker(index)); column.style.backgroundColor=color; const textColor=[colors[1],colors[0],colors[3],colors[2],colors[5],colors[4]][index]; const rgb=hexToRgb(color); const cmyk=rgbToCmyk(rgb.r,rgb.g,rgb.b); const name=await deduceColorName(color); column.innerHTML=`<div class="color-info" style="color:${textColor};font-family:${currentFont}">${color.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}</div><div class="color-name" style="color:${textColor};font-family:${currentFont}">${name}</div>`; const lockIndicator=document.createElement('div'); lockIndicator.className='lock-indicator'; lockIndicator.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'; lockIndicator.style.display=lockedColors[index]?'block':'none'; lockIndicator.style.cursor='pointer'; lockIndicator.addEventListener('click',e=>{e.stopPropagation();lockedColors[index]=!lockedColors[index];localStorage.setItem('lockedColors',JSON.stringify(lockedColors));column.classList.toggle('locked',lockedColors[index]);lockIndicator.style.display=lockedColors[index]?'block':'none'}); column.appendChild(lockIndicator); palette.appendChild(column); const colorInfo=column.querySelector('.color-info'); colorInfo.addEventListener('click',e=>{e.stopPropagation();copyToClipboard(color,colorInfo)}); column.addEventListener('wheel',async(e)=>{ e.preventDefault(); if(!paletteReady) return; if(e.deltaY<0){ lockedColors[index]=!lockedColors[index]; localStorage.setItem('lockedColors', JSON.stringify(lockedColors)); column.classList.toggle('locked', lockedColors[index]); const li=column.querySelector('.lock-indicator'); if(li) li.style.display=lockedColors[index]?'block':'none'; return; } if(lockedColors[index]) return; if(animatingCols.has(index)) return; const newColor=pickRandomContrastingColor(index); await animateColumnUpdate(index,newColor); },{passive:false}); allCols.push(column); }
-  const sortedColors=sortColorsByHue(colors.slice(0,6)); const gradientColumn=document.createElement('div'); gradientColumn.className='color-column preload'; gradientColumn.style.background=`linear-gradient(to bottom, ${sortedColors.join(', ')})`; const avgColor=getAverageColor(sortedColors); const gradTextColor=getOppositeColor(avgColor); const gradNames=await Promise.all(sortedColors.map(c=>deduceColorName(c))); gradientColumn.innerHTML=`<div class=\"color-info\" style=\"color:${gradTextColor};font-family:${currentFont}\">${gradNames.join('<br>')}</div><div class=\"color-name\" style=\"color:${gradTextColor};font-family:${currentFont}\">Gradient</div>`; palette.appendChild(gradientColumn); allCols.push(gradientColumn);
-  requestAnimationFrame(()=>{ let completed=0; const total=allCols.length; const onEnd=()=>{completed++; if(completed>=total){ paletteReady=true; setUIEnabled(true); updateURL(); }}; allCols.forEach(col=>{ const delay=Math.random()*1.0; col.style.transform='translateY(-140vh)'; col.classList.remove('preload'); col.style.animation=`fallHeavy .6s cubic-bezier(0.68,-0.55,0.265,1.55) forwards ${delay}s`; setTimeout(()=>{ palette.classList.add('shake'); setTimeout(()=>palette.classList.remove('shake'),80); }, delay*1000+450); col.addEventListener('animationend', onEnd, {once:true}); }); palette.style.visibility='visible'; });
+  const sortedColors=sortColorsByHue(colors.slice(0,6)); const gradientColumn=document.createElement('div'); gradientColumn.className='color-column preload'; const gradDirection=isMobileDevice()?'to right':'to bottom'; gradientColumn.style.background=`linear-gradient(${gradDirection}, ${sortedColors.join(', ')})`; const avgColor=getAverageColor(sortedColors); const gradTextColor=getOppositeColor(avgColor); gradientColumn.innerHTML=`<div class=\"color-name\" style=\"color:${gradTextColor};font-family:${currentFont}\">Gradient</div>`; palette.appendChild(gradientColumn); allCols.push(gradientColumn);
+  requestAnimationFrame(()=>{ let completed=0; const total=allCols.length; const onEnd=()=>{completed++; if(completed>=total){ paletteReady=true; setUIEnabled(true); updateURL(); }}; allCols.forEach(col=>{ const delay=Math.random()*1.0; col.style.transform= isMobileDevice() ? 'translateX(-140vw)' : 'translateY(-140vh)'; col.classList.remove('preload'); col.style.animation=`fallHeavy .6s cubic-bezier(0.68,-0.55,0.265,1.55) forwards ${delay}s`; setTimeout(()=>{ palette.classList.add('shake'); setTimeout(()=>palette.classList.remove('shake'),80); }, delay*1000+450); col.addEventListener('animationend', onEnd, {once:true}); }); palette.style.visibility='visible'; });
   localStorage.setItem('currentColors', JSON.stringify(colors.slice(0,6)));
 }
 
@@ -180,11 +189,153 @@ function rerollPalette(){ if(!paletteReady||rerollCoolingDown) return; rerollCoo
 window.addEventListener('load',()=>{ initDarkMode(); initLockedColors(); parsePaletteFromURL(); const saved=localStorage.getItem('currentColors'); if(saved){ try{ const arr=JSON.parse(saved); if(Array.isArray(arr)&&arr.length>=6){ for(let i=1;i<=6;i++){ if(typeof arr[i-1]==='string' && /^#[0-9A-F]{6}$/i.test(arr[i-1])){ document.getElementById(`color${i}`).value=arr[i-1].toUpperCase(); } } } }catch(e){} }
   document.getElementById('color7').value='#00D084';
   const yEl=document.getElementById('legalYear'); if(yEl) yEl.textContent=new Date().getFullYear().toString();
-  const ov=document.getElementById('onboardOverlay');
-  if(ov){ ov.classList.add('active'); } else { applyColors(); }
+  const ovDesktop=document.getElementById('onboardOverlay');
+  const ovMobile=document.getElementById('onboardOverlayMobile');
+  if(isMobileDevice()){
+    if(ovMobile){ ovMobile.classList.add('active'); }
+    if(ovDesktop){ ovDesktop.classList.remove('active'); }
+  } else {
+    if(ovDesktop){ ovDesktop.classList.add('active'); }
+    if(ovMobile){ ovMobile.classList.remove('active'); }
+  }
+  // If neither overlay exists, apply colors immediately
+  if(!ovDesktop && !ovMobile){ applyColors(); }
 });
 
-function dismissOnboarding(){ const ov=document.getElementById('onboardOverlay'); if(ov){ ov.classList.remove('active'); } applyColors(); }
+function dismissOnboarding(){
+  const overlays=[document.getElementById('onboardOverlay'), document.getElementById('onboardOverlayMobile')];
+  let anyActive=false;
+  overlays.forEach(o=>{ if(o && o.classList.contains('active')){ o.classList.remove('active'); anyActive=true; } });
+  // Only apply colors after closing an active overlay or if palette not ready
+  if(anyActive || !paletteReady){ applyColors(); }
+}
+
+// Mobile swipe handling
+function triggerHaptic(type){
+  if(window.innerWidth>768) return;
+  try{
+    if('vibrate' in navigator){
+      if(type==='lock') navigator.vibrate([8,12,8]);
+      else if(type==='unlock') navigator.vibrate(16);
+      else if(type==='reroll') navigator.vibrate(25);
+    }
+  }catch(e){}
+}
+let touchStartX=0,touchStartY=0,touchEndX=0,touchEndY=0;
+function handleSwipe(index,direction){
+  if(!paletteReady) return;
+  const column=document.querySelectorAll('.color-column')[index];
+  if(!column||index===6) return;
+  if(direction==='left'){
+    column.classList.add('swipe-lock');
+    setTimeout(()=>column.classList.remove('swipe-lock'),300);
+    lockedColors[index]=!lockedColors[index];
+    localStorage.setItem('lockedColors',JSON.stringify(lockedColors));
+    column.classList.toggle('locked',lockedColors[index]);
+    const li=column.querySelector('.lock-indicator');
+    if(li) li.style.display=lockedColors[index]?'block':'none';
+    triggerHaptic(lockedColors[index]?'lock':'unlock');
+  }else if(direction==='right'&&!lockedColors[index]){
+    column.classList.add('swipe-reroll');
+    setTimeout(()=>column.classList.remove('swipe-reroll'),300);
+    triggerHaptic('reroll');
+    if(!animatingCols.has(index)){
+      const newColor=pickRandomContrastingColor(index);
+      animateColumnUpdate(index,newColor);
+    }
+  }
+}
+
+function setupMobileSwipes(){
+  if(window.innerWidth>768) return;
+  const palette=document.getElementById('palette');
+  palette.addEventListener('touchstart',e=>{
+    touchStartX=e.changedTouches[0].screenX;
+    touchStartY=e.changedTouches[0].screenY;
+  },{passive:true});
+  palette.addEventListener('touchend',e=>{
+    touchEndX=e.changedTouches[0].screenX;
+    touchEndY=e.changedTouches[0].screenY;
+    const deltaX=touchEndX-touchStartX;
+    const deltaY=touchEndY-touchStartY;
+    if(Math.abs(deltaX)>Math.abs(deltaY)&&Math.abs(deltaX)>50){
+      const target=e.target.closest('.color-column');
+      if(target){
+        const cols=Array.from(document.querySelectorAll('.color-column'));
+        const index=cols.indexOf(target);
+        if(index>=0&&index<6){
+          if(deltaX<0) handleSwipe(index,'left');
+          else handleSwipe(index,'right');
+        }
+      }
+    }
+  },{passive:true});
+}
+
+function openMobileSettings(){
+  const overlay=document.getElementById('mobileSettingsOverlay');
+  if(!overlay) return;
+  overlay.classList.remove('closing');
+  // force reflow to ensure transition when re-opening quickly
+  void overlay.offsetHeight;
+  overlay.classList.add('active');
+}
+
+function closeMobileSettings(){
+  const overlay=document.getElementById('mobileSettingsOverlay');
+  if(!overlay) return;
+  overlay.classList.remove('active');
+  overlay.classList.add('closing');
+  const onEnd=()=>{
+    overlay.classList.remove('closing');
+    overlay.removeEventListener('transitionend', onEnd);
+  };
+  overlay.addEventListener('transitionend', onEnd, {once:false});
+}
+
+// Update toggleDarkMode to sync mobile icons
+const toggleDarkModeOriginal=toggleDarkMode;
+toggleDarkMode=()=>{
+  toggleDarkModeOriginal();
+  const moonIconM=document.getElementById('moonIconMobile');
+  const sunIconM=document.getElementById('sunIconMobile');
+  const labelM=document.getElementById('darkModeLabelMobile');
+  if(moonIconM) moonIconM.style.display=darkModeEnabled?'none':'block';
+  if(sunIconM) sunIconM.style.display=darkModeEnabled?'block':'none';
+  if(labelM) labelM.textContent=darkModeEnabled?'Light':'Dark';
+};
+
+// Setup mobile font items
+document.addEventListener('DOMContentLoaded',()=>{
+  // Set dynamic bottom bar height for responsive row sizing
+  const setBottomBarHeight=()=>{
+    const mc=document.getElementById('mobileControls');
+    if(mc){
+      const h=mc.offsetHeight || 80;
+      document.documentElement.style.setProperty('--mobile-bottom-bar-height', h+'px');
+    }
+  };
+  setBottomBarHeight();
+  window.addEventListener('resize', setBottomBarHeight);
+  setupMobileSwipes();
+  document.querySelectorAll('.font-item-mobile').forEach(item=>{
+    item.addEventListener('click',function(){
+      if(!paletteReady||fontSwitchCoolingDown) return;
+      fontSwitchCoolingDown=true;
+      const items=document.querySelectorAll('.font-item,.font-item-mobile');
+      items.forEach(i=>i.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('.font-item[data-font="'+this.dataset.font+'"]').forEach(i=>i.classList.add('active'));
+      currentFont=this.dataset.font;
+      items.forEach(i=>i.classList.add('cooldown'));
+      applyColors();
+      setTimeout(()=>{
+        fontSwitchCoolingDown=false;
+        items.forEach(i=>i.classList.remove('cooldown'));
+      },fontSwitchCooldownMs);
+    });
+  });
+});
 
 // Ensure inline handlers can access functions
-Object.assign(window, { toggleBurgerMenu, exportPalette, sharePalette, toggleDarkMode, importPalette, confirmColorChange, cancelColorChange, rerollPalette, dismissOnboarding });
+Object.assign(window, { toggleBurgerMenu, exportPalette, sharePalette, toggleDarkMode, importPalette, confirmColorChange, cancelColorChange, rerollPalette, dismissOnboarding, openMobileSettings, closeMobileSettings });
