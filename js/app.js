@@ -60,7 +60,8 @@ async function animateColumnUpdate(idx, newColor){
       const cmyk = rgbToCmyk(rgb.r,rgb.g,rgb.b);
       const name = await deduceColorName(newColor);
       const textColor = textColorArray[idx];
-      primaryCol.innerHTML = `<div class="color-info" style="color:${textColor};font-family:${currentFont}">${newColor.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}</div><div class="color-name" style="color:${textColor};font-family:${currentFont}">${name}</div>`;
+      const colorInfoText=isMobileDevice()?`${newColor.toUpperCase()} · RGB ${rgb.r},${rgb.g},${rgb.b} · C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}`:`${newColor.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}`;
+      primaryCol.innerHTML = `<div class="color-info" style="color:${textColor};font-family:${currentFont}">${colorInfoText}</div><div class="color-name" style="color:${textColor};font-family:${currentFont}">${name}</div>`;
       const info = primaryCol.querySelector('.color-info');
       info.addEventListener('click', e=>{e.stopPropagation();copyToClipboard(newColor,info)});
       const lockIndicator = document.createElement('div');
@@ -82,7 +83,8 @@ async function animateColumnUpdate(idx, newColor){
       const cmykP = rgbToCmyk(rgbP.r,rgbP.g,rgbP.b);
       const nameP = await deduceColorName(pairColor);
       const textColorP = textColorArray[pairIdx];
-      pairedCol.innerHTML = `<div class="color-info" style="color:${textColorP};font-family:${currentFont}">${pairColor.toUpperCase()}<br>RGB ${rgbP.r} ${rgbP.g} ${rgbP.b}<br>C${cmykP.c} M${cmykP.m} Y${cmykP.y} K${cmykP.k}</div><div class="color-name" style="color:${textColorP};font-family:${currentFont}">${nameP}</div>`;
+      const colorInfoTextP=isMobileDevice()?`${pairColor.toUpperCase()} · RGB ${rgbP.r},${rgbP.g},${rgbP.b} · C${cmykP.c} M${cmykP.m} Y${cmykP.y} K${cmykP.k}`:`${pairColor.toUpperCase()}<br>RGB ${rgbP.r} ${rgbP.g} ${rgbP.b}<br>C${cmykP.c} M${cmykP.m} Y${cmykP.y} K${cmykP.k}`;
+      pairedCol.innerHTML = `<div class="color-info" style="color:${textColorP};font-family:${currentFont}">${colorInfoTextP}</div><div class="color-name" style="color:${textColorP};font-family:${currentFont}">${nameP}</div>`;
       const infoP = pairedCol.querySelector('.color-info');
       infoP.addEventListener('click', e=>{e.stopPropagation();copyToClipboard(pairColor,infoP)});
       const lockIndicatorP = document.createElement('div');
@@ -169,7 +171,7 @@ function importPalette(event){ const file=event.target.files[0]; if(!file) retur
 
 const generateRandomColors=()=>{ if(!paletteReady) return; generatePaletteWithContrast(); applyColors(); toggleBurgerMenu(); };
 
-async function applyColors(){ const palette=document.getElementById('palette'); palette.style.visibility='hidden'; palette.innerHTML=''; paletteReady=false; setUIEnabled(false); const colors=[]; for(let i=1;i<=7;i++) colors.push(document.getElementById(`color${i}`).value||'#000000'); currentColors=[...colors]; const allCols=[]; for(let index=0; index<6; index++){ const color=colors[index]; const column=document.createElement('div'); column.className='color-column preload'; if(lockedColors[index]) column.classList.add('locked'); column.addEventListener('click',()=>openColorPicker(index)); column.style.backgroundColor=color; const textColor=[colors[1],colors[0],colors[3],colors[2],colors[5],colors[4]][index]; const rgb=hexToRgb(color); const cmyk=rgbToCmyk(rgb.r,rgb.g,rgb.b); const name=await deduceColorName(color); column.innerHTML=`<div class="color-info" style="color:${textColor};font-family:${currentFont}">${color.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}</div><div class="color-name" style="color:${textColor};font-family:${currentFont}">${name}</div>`; const lockIndicator=document.createElement('div'); lockIndicator.className='lock-indicator'; lockIndicator.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'; lockIndicator.style.display=lockedColors[index]?'block':'none'; lockIndicator.style.cursor='pointer'; lockIndicator.addEventListener('click',e=>{e.stopPropagation();lockedColors[index]=!lockedColors[index];localStorage.setItem('lockedColors',JSON.stringify(lockedColors));column.classList.toggle('locked',lockedColors[index]);lockIndicator.style.display=lockedColors[index]?'block':'none'}); column.appendChild(lockIndicator); palette.appendChild(column); const colorInfo=column.querySelector('.color-info'); colorInfo.addEventListener('click',e=>{e.stopPropagation();copyToClipboard(color,colorInfo)}); column.addEventListener('wheel',async(e)=>{ e.preventDefault(); if(!paletteReady) return; if(e.deltaY<0){ lockedColors[index]=!lockedColors[index]; localStorage.setItem('lockedColors', JSON.stringify(lockedColors)); column.classList.toggle('locked', lockedColors[index]); const li=column.querySelector('.lock-indicator'); if(li) li.style.display=lockedColors[index]?'block':'none'; return; } if(lockedColors[index]) return; if(animatingCols.has(index)) return; const newColor=pickRandomContrastingColor(index); await animateColumnUpdate(index,newColor); },{passive:false}); allCols.push(column); }
+async function applyColors(){ const palette=document.getElementById('palette'); palette.style.visibility='hidden'; palette.innerHTML=''; paletteReady=false; setUIEnabled(false); const colors=[]; for(let i=1;i<=7;i++) colors.push(document.getElementById(`color${i}`).value||'#000000'); currentColors=[...colors]; const allCols=[]; for(let index=0; index<6; index++){ const color=colors[index]; const column=document.createElement('div'); column.className='color-column preload'; if(lockedColors[index]) column.classList.add('locked'); column.addEventListener('click',()=>openColorPicker(index)); column.style.backgroundColor=color; const textColor=[colors[1],colors[0],colors[3],colors[2],colors[5],colors[4]][index]; const rgb=hexToRgb(color); const cmyk=rgbToCmyk(rgb.r,rgb.g,rgb.b); const name=await deduceColorName(color); const colorInfoText=isMobileDevice()?`${color.toUpperCase()} · RGB ${rgb.r},${rgb.g},${rgb.b} · C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}`:`${color.toUpperCase()}<br>RGB ${rgb.r} ${rgb.g} ${rgb.b}<br>C${cmyk.c} M${cmyk.m} Y${cmyk.y} K${cmyk.k}`; column.innerHTML=`<div class="color-info" style="color:${textColor};font-family:${currentFont}">${colorInfoText}</div><div class="color-name" style="color:${textColor};font-family:${currentFont}">${name}</div>`; const lockIndicator=document.createElement('div'); lockIndicator.className='lock-indicator'; lockIndicator.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'; lockIndicator.style.display=lockedColors[index]?'block':'none'; lockIndicator.style.cursor='pointer'; lockIndicator.addEventListener('click',e=>{e.stopPropagation();lockedColors[index]=!lockedColors[index];localStorage.setItem('lockedColors',JSON.stringify(lockedColors));column.classList.toggle('locked',lockedColors[index]);lockIndicator.style.display=lockedColors[index]?'block':'none'}); column.appendChild(lockIndicator); palette.appendChild(column); const colorInfo=column.querySelector('.color-info'); colorInfo.addEventListener('click',e=>{e.stopPropagation();copyToClipboard(color,colorInfo)}); column.addEventListener('wheel',async(e)=>{ e.preventDefault(); if(!paletteReady) return; if(e.deltaY<0){ lockedColors[index]=!lockedColors[index]; localStorage.setItem('lockedColors', JSON.stringify(lockedColors)); column.classList.toggle('locked', lockedColors[index]); const li=column.querySelector('.lock-indicator'); if(li) li.style.display=lockedColors[index]?'block':'none'; return; } if(lockedColors[index]) return; if(animatingCols.has(index)) return; const newColor=pickRandomContrastingColor(index); await animateColumnUpdate(index,newColor); },{passive:false}); allCols.push(column); }
   const sortedColors=sortColorsByHue(colors.slice(0,6)); const gradientColumn=document.createElement('div'); gradientColumn.className='color-column preload'; const gradDirection=isMobileDevice()?'to right':'to bottom'; gradientColumn.style.background=`linear-gradient(${gradDirection}, ${sortedColors.join(', ')})`; const avgColor=getAverageColor(sortedColors); const gradTextColor=getOppositeColor(avgColor); gradientColumn.innerHTML=`<div class=\"color-name\" style=\"color:${gradTextColor};font-family:${currentFont}\">Gradient</div>`; palette.appendChild(gradientColumn); allCols.push(gradientColumn);
   requestAnimationFrame(()=>{ let completed=0; const total=allCols.length; const onEnd=()=>{completed++; if(completed>=total){ paletteReady=true; setUIEnabled(true); updateURL(); }}; allCols.forEach(col=>{ const delay=Math.random()*1.0; col.style.transform= isMobileDevice() ? 'translateX(-140vw)' : 'translateY(-140vh)'; col.classList.remove('preload'); col.style.animation=`fallHeavy .6s cubic-bezier(0.68,-0.55,0.265,1.55) forwards ${delay}s`; setTimeout(()=>{ palette.classList.add('shake'); setTimeout(()=>palette.classList.remove('shake'),80); }, delay*1000+450); col.addEventListener('animationend', onEnd, {once:true}); }); palette.style.visibility='visible'; });
   localStorage.setItem('currentColors', JSON.stringify(colors.slice(0,6)));
@@ -212,7 +214,7 @@ function dismissOnboarding(){
 
 // Mobile swipe handling
 function triggerHaptic(type){
-  if(window.innerWidth>768) return;
+  if(!isMobileDevice()) return;
   try{
     if('vibrate' in navigator){
       if(type==='lock') navigator.vibrate([8,12,8]);
@@ -247,29 +249,52 @@ function handleSwipe(index,direction){
 }
 
 function setupMobileSwipes(){
-  if(window.innerWidth>768) return;
   const palette=document.getElementById('palette');
-  palette.addEventListener('touchstart',e=>{
-    touchStartX=e.changedTouches[0].screenX;
-    touchStartY=e.changedTouches[0].screenY;
-  },{passive:true});
-  palette.addEventListener('touchend',e=>{
-    touchEndX=e.changedTouches[0].screenX;
-    touchEndY=e.changedTouches[0].screenY;
-    const deltaX=touchEndX-touchStartX;
-    const deltaY=touchEndY-touchStartY;
-    if(Math.abs(deltaX)>Math.abs(deltaY)&&Math.abs(deltaX)>50){
-      const target=e.target.closest('.color-column');
-      if(target){
-        const cols=Array.from(document.querySelectorAll('.color-column'));
-        const index=cols.indexOf(target);
-        if(index>=0&&index<6){
-          if(deltaX<0) handleSwipe(index,'left');
-          else handleSwipe(index,'right');
+  if(!palette) return;
+  
+  let startTarget=null;
+  let startX=0;
+  let startY=0;
+  
+  const handleTouchStart=(e)=>{
+    const col=e.target.closest('.color-column');
+    if(col){
+      startTarget=col;
+      const touch=e.touches[0];
+      startX=touch.clientX;
+      startY=touch.clientY;
+      touchStartX=startX;
+      touchStartY=startY;
+    }
+  };
+  
+  const handleTouchEnd=(e)=>{
+    if(!startTarget) return;
+    
+    const touch=e.changedTouches[0];
+    const endX=touch.clientX;
+    const endY=touch.clientY;
+    const deltaX=endX-startX;
+    const deltaY=endY-startY;
+    
+    // Swipe horizontal: au moins 50px et plus horizontal que vertical
+    if(Math.abs(deltaX)>50 && Math.abs(deltaX)>Math.abs(deltaY)){
+      const cols=Array.from(palette.querySelectorAll('.color-column'));
+      const index=cols.indexOf(startTarget);
+      if(index>=0 && index<6){
+        if(deltaX<0){
+          handleSwipe(index,'left');
+        }else{
+          handleSwipe(index,'right');
         }
       }
     }
-  },{passive:true});
+    
+    startTarget=null;
+  };
+  
+  palette.addEventListener('touchstart',handleTouchStart,{passive:true});
+  palette.addEventListener('touchend',handleTouchEnd,{passive:true});
 }
 
 function openMobileSettings(){
