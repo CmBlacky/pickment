@@ -132,8 +132,8 @@ const getOppositeColor = h=>{const rgb=hexToRgb(h);const r=255-rgb.r,g=255-rgb.g
 const getAverageColor = (colors)=>{let r=0,g=0,b=0;colors.forEach(c=>{const x=hexToRgb(c);r+=x.r;g+=x.g;b+=x.b});r=Math.round(r/colors.length);g=Math.round(g/colors.length);b=Math.round(b/colors.length);return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`};
 
 const toggleBurgerMenu = ()=>{ if(!paletteReady) return; document.getElementById('burgerMenu').classList.toggle('active'); document.getElementById('menuTab').classList.toggle('active'); };
-const toggleDarkMode = ()=>{ if(!paletteReady) return; darkModeEnabled=!darkModeEnabled; document.body.classList.toggle('dark-mode'); localStorage.setItem('darkModeEnabled', darkModeEnabled); const label=document.getElementById('darkModeLabel'); const moonIcon=document.getElementById('moonIcon'); const sunIcon=document.getElementById('sunIcon'); if(label) label.textContent = darkModeEnabled?'Light':'Dark'; if(moonIcon) moonIcon.style.display = darkModeEnabled?'none':'block'; if(sunIcon) sunIcon.style.display = darkModeEnabled?'block':'none'; };
-const initDarkMode = ()=>{ darkModeEnabled = localStorage.getItem('darkModeEnabled')==='true'; if(darkModeEnabled){ document.body.classList.add('dark-mode'); const label=document.getElementById('darkModeLabel'); const moonIcon=document.getElementById('moonIcon'); const sunIcon=document.getElementById('sunIcon'); if(label) label.textContent='Light'; if(moonIcon) moonIcon.style.display='none'; if(sunIcon) sunIcon.style.display='block'; } };
+const toggleDarkMode = ()=>{ darkModeEnabled=!darkModeEnabled; document.body.classList.toggle('dark-mode'); localStorage.setItem('darkModeEnabled', darkModeEnabled); const label=document.getElementById('darkModeLabel'); const moonIcon=document.getElementById('moonIcon'); const sunIcon=document.getElementById('sunIcon'); const labelM=document.getElementById('darkModeLabelMobile'); const moonIconM=document.getElementById('moonIconMobile'); const sunIconM=document.getElementById('sunIconMobile'); if(label) label.textContent = darkModeEnabled?'Light':'Dark'; if(labelM) labelM.textContent = darkModeEnabled?'Light':'Dark'; if(moonIcon) moonIcon.style.display = darkModeEnabled?'none':'block'; if(sunIcon) sunIcon.style.display = darkModeEnabled?'block':'none'; if(moonIconM) moonIconM.style.display = darkModeEnabled?'none':'block'; if(sunIconM) sunIconM.style.display = darkModeEnabled?'block':'none'; };
+const initDarkMode = ()=>{ darkModeEnabled = localStorage.getItem('darkModeEnabled')==='true'; if(darkModeEnabled){ document.body.classList.add('dark-mode'); const label=document.getElementById('darkModeLabel'); const moonIcon=document.getElementById('moonIcon'); const sunIcon=document.getElementById('sunIcon'); const labelM=document.getElementById('darkModeLabelMobile'); const moonIconM=document.getElementById('moonIconMobile'); const sunIconM=document.getElementById('sunIconMobile'); if(label) label.textContent='Light'; if(labelM) labelM.textContent='Light'; if(moonIcon) moonIcon.style.display='none'; if(sunIcon) sunIcon.style.display='block'; if(moonIconM) moonIconM.style.display='none'; if(sunIconM) sunIconM.style.display='block'; } };
 
 const getContrastRatio=(h1,h2)=>{const lum=h=>{const rgb=hexToRgb(h);const [r,g,b]=[rgb.r,rgb.g,rgb.b].map(x=> x/255<=0.03928? x/255/12.92 : Math.pow((x/255+0.055)/1.055,2.4));return .2126*r+.7152*g+.0722*b};const l1=lum(h1),l2=lum(h2);const L=Math.max(l1,l2),D=Math.min(l1,l2);return (L+0.05)/(D+0.05)};
 const rgbToHsv=(r,g,b)=>{r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h=0,s=max===0?0:(max-min)/max,v=max;if(max!==min){const d=max-min;if(max===r)h=((g-b)/d+(g<b?6:0))/6;else if(max===g)h=((b-r)/d+2)/6;else h=((r-g)/d+4)/6}return{h,s,v}};
@@ -318,17 +318,7 @@ function closeMobileSettings(){
   overlay.addEventListener('transitionend', onEnd, {once:false});
 }
 
-// Update toggleDarkMode to sync mobile icons
-const toggleDarkModeOriginal=toggleDarkMode;
-toggleDarkMode=()=>{
-  toggleDarkModeOriginal();
-  const moonIconM=document.getElementById('moonIconMobile');
-  const sunIconM=document.getElementById('sunIconMobile');
-  const labelM=document.getElementById('darkModeLabelMobile');
-  if(moonIconM) moonIconM.style.display=darkModeEnabled?'none':'block';
-  if(sunIconM) sunIconM.style.display=darkModeEnabled?'block':'none';
-  if(labelM) labelM.textContent=darkModeEnabled?'Light':'Dark';
-};
+
 
 // Setup mobile font items
 document.addEventListener('DOMContentLoaded',()=>{
