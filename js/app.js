@@ -16,8 +16,10 @@ function isMobileDevice(){
 function setUIEnabled(enabled) {
   const tab = document.getElementById('menuTab');
   const reroll = document.getElementById('rerollBtn');
+  const mobileBtn = document.querySelector('.mobile-btn-roll');
   const items = document.querySelectorAll('.menu-item');
   [tab, reroll].forEach(el => { if (el) el.classList.toggle('disabled', !enabled); });
+  if (mobileBtn) mobileBtn.classList.toggle('cooldown', !enabled);
   items.forEach(el => el.classList.toggle('disabled', !enabled));
 }
 
@@ -38,6 +40,7 @@ const pickRandomContrastingColor = (idx) => {
 async function animateColumnUpdate(idx, newColor){
   if (animatingCols.has(idx)) return;
   animatingCols.add(idx);
+  setUIEnabled(false);
   document.getElementById(`color${idx+1}`).value = newColor;
   currentColors[idx] = newColor;
   const palette = document.getElementById('palette');
@@ -45,7 +48,7 @@ async function animateColumnUpdate(idx, newColor){
   const pairIdx = idx ^ 1;
   const pairedCol = palette.children[pairIdx];
   const gradientCol = palette.children[6];
-  if (!primaryCol){ animatingCols.delete(idx); return; }
+  if (!primaryCol){ animatingCols.delete(idx); setUIEnabled(true); return; }
   primaryCol.style.animation = 'fallOut .4s ease-in forwards';
   if (pairedCol) pairedCol.style.animation = 'fallOut .4s ease-in forwards';
   if (gradientCol) gradientCol.style.animation = 'fallOut .4s ease-in forwards';
@@ -69,7 +72,7 @@ async function animateColumnUpdate(idx, newColor){
       lockIndicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>';
       lockIndicator.style.display = lockedColors[idx] ? 'block':'none';
       lockIndicator.style.cursor = 'pointer';
-      lockIndicator.addEventListener('click',e=>{e.stopPropagation();lockedColors[idx]=!lockedColors[idx];localStorage.setItem('lockedColors',JSON.stringify(lockedColors));primaryCol.classList.toggle('locked',lockedColors[idx]);lockIndicator.style.display=lockedColors[idx]?'block':'none'});
+      lockIndicator.addEventListener('click',e=>{e.stopPropagation();lockedColors[idx]=!lockedColors[idx];localStorage.setItem('lockedColors',JSON.stringify(lockedColors));primaryCol.classList.toggle('locked',lockedColors[idx]);lockIndicator.style.display=lockedColors[idx]?'block':'none'; if(isMobileDevice()){ primaryCol.classList.add('swipe-lock'); setTimeout(()=>primaryCol.classList.remove('swipe-lock'),300); triggerHaptic(lockedColors[idx]?'lock':'unlock'); }});
       primaryCol.appendChild(lockIndicator);
       primaryCol.classList.toggle('locked', lockedColors[idx]);
       primaryCol.style.animation = 'fallHeavy .6s cubic-bezier(0.68,-0.55,0.265,1.55) forwards';
@@ -111,6 +114,7 @@ async function animateColumnUpdate(idx, newColor){
     }
     setTimeout(()=>{
       animatingCols.delete(idx);
+      if(animatingCols.size === 0) setUIEnabled(true);
       localStorage.setItem('currentColors', JSON.stringify(currentColors.slice(0,6)));
       updateURL();
     },650);
@@ -158,7 +162,7 @@ document.querySelectorAll('.font-item').forEach(item=>{
 });
 
 function openColorPicker(i){ if(i===6) return; currentEditingColumn=i; const color=currentColors[i]; colorPickerInput.value=color; colorPickerHex.value=color; colorPickerPreview.style.backgroundColor=color; document.getElementById('colorPickerOverlay').classList.add('active'); }
-function toggleLockColor(i){ if(i<6){ lockedColors[i]=!lockedColors[i]; localStorage.setItem('lockedColors', JSON.stringify(lockedColors)); const column=document.querySelectorAll('.color-column')[i]; if(column){ column.classList.toggle('locked', lockedColors[i]); } } }
+function toggleLockColor(i){ if(i<6){ lockedColors[i]=!lockedColors[i]; localStorage.setItem('lockedColors', JSON.stringify(lockedColors)); const column=document.querySelectorAll('.color-column')[i]; if(column){ column.classList.toggle('locked', lockedColors[i]); const li=column.querySelector('.lock-indicator'); if(li) li.style.display=lockedColors[i]?'block':'none'; if(isMobileDevice()){ column.classList.add('swipe-lock'); setTimeout(()=>column.classList.remove('swipe-lock'),300); triggerHaptic(lockedColors[i]?'lock':'unlock'); } } } }
 const initLockedColors=()=>{ const saved=localStorage.getItem('lockedColors'); if(saved){ lockedColors=JSON.parse(saved); } };
 
 async function confirmColorChange(){ if(currentEditingColumn===null) return; let newColor=colorPickerInput.value; if(!newColor.startsWith('#')) newColor='#'+newColor; await animateColumnUpdate(currentEditingColumn,newColor); document.getElementById('colorPickerOverlay').classList.remove('active'); currentEditingColumn=null; }
@@ -186,7 +190,7 @@ async function sharePalette(){ if(!paletteReady) return; const url=getCurrentPal
 
 const parsePaletteFromURL=()=>{const qs=new URLSearchParams(location.search); const pal=qs.get('palette')||qs.get('p'); if(pal){ const parts=pal.split(/[,-]/).map(s=>s.trim()); if(parts.length>=6){ for(let i=0;i<6;i++){ let h=parts[i]; if(!h.startsWith('#')) h='#'+h; if(/^#[0-9A-F]{6}$/i.test(h)){ document.getElementById(`color${i+1}`).value=h.toUpperCase(); } } } } const f=qs.get('font'); if(f){ try{ const decoded=decodeURIComponent(f); currentFont=decoded; document.querySelectorAll('.font-item').forEach(i=>{ i.classList.toggle('active', i.dataset.font===decoded); }); }catch{} } const d=qs.get('dark'); if(d==='1'){ if(!darkModeEnabled) toggleDarkMode(); } };
 
-function rerollPalette(){ if(!paletteReady||rerollCoolingDown) return; rerollCoolingDown=true; const btn=document.getElementById('rerollBtn'); if(btn) btn.classList.add('cooldown'); const palette=document.getElementById('palette'); const cols=palette.querySelectorAll('.color-column'); cols.forEach(col=>{ col.style.animation='fallOut .4s ease-in forwards'; }); palette.classList.add('shake'); setTimeout(()=>palette.classList.remove('shake'),300); setTimeout(async()=>{ generatePaletteWithContrast(); await applyColors(); },450); setTimeout(()=>{ rerollCoolingDown=false; if(btn) btn.classList.remove('cooldown'); }, rerollCooldownMs); }
+function rerollPalette(){ if(!paletteReady||rerollCoolingDown) return; rerollCoolingDown=true; setUIEnabled(false); const palette=document.getElementById('palette'); const cols=palette.querySelectorAll('.color-column'); cols.forEach(col=>{ col.style.animation='fallOut .4s ease-in forwards'; }); palette.classList.add('shake'); setTimeout(()=>palette.classList.remove('shake'),300); setTimeout(async()=>{ generatePaletteWithContrast(); await applyColors(); },450); setTimeout(()=>{ rerollCoolingDown=false; }, rerollCooldownMs); }
 
 window.addEventListener('load',()=>{ initDarkMode(); initLockedColors(); parsePaletteFromURL(); const saved=localStorage.getItem('currentColors'); if(saved){ try{ const arr=JSON.parse(saved); if(Array.isArray(arr)&&arr.length>=6){ for(let i=1;i<=6;i++){ if(typeof arr[i-1]==='string' && /^#[0-9A-F]{6}$/i.test(arr[i-1])){ document.getElementById(`color${i}`).value=arr[i-1].toUpperCase(); } } } }catch(e){} }
   document.getElementById('color7').value='#00D084';
@@ -343,6 +347,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       document.querySelectorAll('.font-item[data-font="'+this.dataset.font+'"]').forEach(i=>i.classList.add('active'));
       currentFont=this.dataset.font;
       items.forEach(i=>i.classList.add('cooldown'));
+      const overlay=document.getElementById('mobileSettingsOverlay');
+      if(overlay) overlay.classList.remove('active');
       applyColors();
       setTimeout(()=>{
         fontSwitchCoolingDown=false;

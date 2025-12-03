@@ -11,7 +11,7 @@
         gtag('config', 'G-FHT11HSXZF');
     </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pickment.io</title>
     <meta name="description" content="Generate beautiful, accessible color palettes with Pickment.io. Free online tool to create, customize, lock, export and share color schemes with optimized contrast ratios for your design projects.">
     <meta name="keywords" content="color palette generator, color scheme generator, color picker, palette creator, design colors, hex colors, color combinations, accessible colors, contrast checker, color export, SVG palette, color tools, web design colors, UI colors, brand colors">
@@ -196,6 +196,29 @@
                     </div>
                 </div>
             </div>
+            <div class="mobile-settings-section">
+                <h4>Touch Controls</h4>
+                <div style="display:grid;gap:12px;font-size:12px;line-height:1.4;">
+                    <div style="display:grid;grid-template-columns:60px 1fr;align-items:center;gap:12px;">
+                        <div style="display:flex;gap:6px;align-items:center;color:#555;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                        </div>
+                        <div><strong>Swipe Left</strong><br>Lock / Unlock color</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:60px 1fr;align-items:center;gap:12px;">
+                        <div style="display:flex;gap:6px;align-items:center;color:#555;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </div>
+                        <div><strong>Swipe Right</strong><br>Reroll this row (new color)</div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:60px 1fr;align-items:center;gap:12px;">
+                        <div style="display:flex;gap:6px;align-items:center;color:#555;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><circle cx="12" cy="12" r="1"/></svg>
+                        </div>
+                        <div><strong>Tap</strong><br>Edit color manually</div>
+                    </div>
+                </div>
+            </div>
             <div class="mobile-settings-footer">
                 <a href="https://www.linkedin.com/in/charlie-barbaud/" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">Made by me — Contact</a>
                 <a href="legal.html" style="color: inherit; text-decoration: underline; font-size: 11px; opacity: 0.7;">Legal</a>
@@ -304,7 +327,7 @@
         <h3>Edit color</h3>
         <div class="color-picker-wrapper">
             <div class="color-picker-preview" id="colorPickerPreview"></div>
-            <input type="color" id="colorPickerInput" value="#000000">
+            <input type="color" id="colorPickerInput" value="#000000" class="desktop-only">
             <div>
                 <div class="color-picker-label">Hex</div>
                 <input type="text" id="colorPickerHex" placeholder="#000000" maxlength="7">
@@ -338,9 +361,8 @@
             <span>Roll</span>
         </button>
                 <button class="mobile-btn mobile-btn-settings" onclick="openMobileSettings()">
-                        <!-- Dynamic dark/light settings icon using currentColor -->
-                        <svg width="32" height="32" viewBox="0 0 169 166" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M84.3088 3C87.9983 3 91.6302 3.24678 95.1897 3.72168L104.192 24.1758C109.491 25.9215 114.482 28.3462 119.062 31.3467L140.67 25.6309C145.916 30.6549 150.491 36.3736 154.249 42.6387L143.868 62.4336C145.755 67.5229 147.006 72.9196 147.53 78.5283L165.48 91.8643C164.817 99.2654 163.164 106.381 160.656 113.079L138.686 117.309C135.822 122.045 132.357 126.377 128.396 130.199L129.16 152.559C123.14 156.534 116.56 159.732 109.566 162.01L92.5579 147.468C89.8577 147.818 87.1044 148 84.3088 148C81.5129 148 78.7593 147.818 76.0588 147.468L59.051 162.01C52.0563 159.732 45.4769 156.534 39.4563 152.559L40.2209 130.199C36.2601 126.377 32.7948 122.045 29.9309 117.309L7.96216 113.079C5.45374 106.381 3.8008 99.2654 3.13794 91.8643L21.0872 78.5283C21.6103 72.92 22.8623 67.5236 24.7483 62.4346L14.3674 42.6387C18.1253 36.3736 22.7005 30.6549 27.9465 25.6309L49.5549 31.3467C54.1347 28.3461 59.1256 25.9216 64.425 24.1758L73.427 3.72168C76.9868 3.24669 80.6191 3 84.3088 3ZM84.3088 48C64.1504 48 47.8088 64.3416 47.8088 84.5C47.8088 104.658 64.1504 121 84.3088 121C104.467 121 120.809 104.658 120.809 84.5C120.809 64.3416 104.467 48 84.3088 48Z" stroke="currentColor" stroke-width="6"/>
+                        <svg width="24" height="24" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M10.0444 1C10.4535 1 10.8562 1.02785 11.2509 1.08162L12.249 3.39702C12.8365 3.59467 13.3899 3.86918 13.8977 4.20878L16.2936 3.56184C16.8752 4.13056 17.3825 4.77784 17.7992 5.48704L16.6482 7.72784C16.8574 8.30403 16.9961 8.91486 17.0542 9.5498L19.0444 11.0594C18.9709 11.8972 18.7876 12.7028 18.5096 13.461L16.0736 13.9398C15.756 14.4759 15.3719 14.9663 14.9327 15.399L15.0174 17.9301C14.3499 18.3801 13.6203 18.7421 12.8449 19L10.9591 17.3538C10.6597 17.3935 10.3543 17.4141 10.0444 17.4141C9.73442 17.4141 9.42907 17.3935 9.1297 17.3538L7.2439 19C6.46832 18.7421 5.73886 18.3801 5.07127 17.9301L5.15609 15.399C4.7169 14.9663 4.33271 14.4759 4.01516 13.9398L1.5793 13.461C1.30122 12.7028 1.11795 11.8972 1.04443 11.0594L3.03456 9.5498C3.09255 8.91497 3.23137 8.30403 3.44049 7.72796L2.28947 5.48704C2.70615 4.77784 3.21341 4.13056 3.79507 3.56184L6.19101 4.20878C6.69883 3.86918 7.25211 3.59467 7.83975 3.39702L8.83787 1.08162C9.23259 1.02785 9.6353 1 10.0444 1Z" stroke="currentColor" stroke-width="2"/>
                         </svg>
                         <span>Settings</span>
                 </button>
